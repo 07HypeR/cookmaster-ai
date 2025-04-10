@@ -1,10 +1,19 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Button,
+} from "react-native";
 import React from "react";
 import { Marquee } from "@animatereactnative/marquee";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Colors from "@/services/Colors";
+import { useLogto } from "@logto/rn";
 
 export default function Landing() {
+  const { signIn, signOut, isAuthenticated } = useLogto();
   const imageList = [
     require("../assets/images/1.jpg"),
     require("../assets/images/c1.jpg"),
@@ -92,7 +101,7 @@ export default function Landing() {
           Generate delicious recipes in seconds with the power of Al! 🍔✨
         </Text>
         <TouchableOpacity
-          onPress={() => console.log("Button Click")}
+          onPress={async () => signIn("exp://192.168.0.107:8081")}
           style={styles.button}
         >
           <Text
@@ -106,6 +115,7 @@ export default function Landing() {
             Get Started
           </Text>
         </TouchableOpacity>
+        {/* <Button title="Sign out" onPress={async () => signOut()} /> */}
       </View>
     </GestureHandlerRootView>
   );
