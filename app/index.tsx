@@ -25,10 +25,10 @@ export default function Index() {
             };
             const resp = await GlobalApi.CreateNewUser(data);
             setUser(resp.data.data);
-            router.replace("/Landing");
+            router.replace("/(tabs)/Home");
           } else {
             setUser(result?.data?.data[0]);
-            router.replace("/Landing");
+            router.replace("/(tabs)/Home");
           }
         }
       });

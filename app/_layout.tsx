@@ -28,6 +28,7 @@ export default function RootLayout() {
               headerShown: false,
             }}
           />
+          <Stack.Screen name="(tabs)" />
         </Stack>
       </UserContext.Provider>
     </LogtoProvider>
