@@ -1,4 +1,4 @@
-import { UserContext } from "@/context/UserContect";
+import { UserContext } from "@/context/UserContext";
 import GlobalApi from "@/services/GlobalApi";
 import { useLogto } from "@logto/rn";
 import { Redirect, useRouter } from "expo-router";
@@ -13,9 +13,12 @@ export default function Index() {
   useEffect(() => {
     if (isAuthenticated) {
       getIdTokenClaims().then(async (userData) => {
+        console.log("--", userData);
+
         if (userData?.email) {
           const result = await GlobalApi.GetUserByEmail(userData?.email);
-          // To Get Strapi Data in response
+          console.log(result.data.data); // To Get Strapi Data in response
+
           if (!result.data.data) {
             // Insert new record
             const data = {
@@ -24,6 +27,7 @@ export default function Index() {
               picture: userData.picture,
             };
             const resp = await GlobalApi.CreateNewUser(data);
+            console.log(resp.data.data);
             setUser(resp.data.data);
             router.replace("/(tabs)/Home");
           } else {

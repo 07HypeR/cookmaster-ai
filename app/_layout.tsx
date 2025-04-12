@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { LogtoProvider, LogtoConfig, UserScope } from "@logto/rn";
-import { UserContext } from "@/context/UserContect";
+import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 
 export default function RootLayout() {
