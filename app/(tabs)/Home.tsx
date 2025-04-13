@@ -3,6 +3,7 @@ import React from "react";
 import Colors from "@/services/Colors";
 import IntroHeader from "@/components/IntroHeader";
 import CreateRecipe from "@/components/CreateRecipe";
+import CategoryList from "@/components/CategoryList";
 
 const Home = () => {
   return (
@@ -19,6 +20,7 @@ const Home = () => {
       {/* Recipe Generator UI */}
       <CreateRecipe />
       {/* Category */}
+      <CategoryList />
     </ScrollView>
   );
 };

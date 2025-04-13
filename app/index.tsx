@@ -5,7 +5,7 @@ import { Redirect, useRouter } from "expo-router";
 import { useContext, useEffect } from "react";
 import { Text, View } from "react-native";
 
-export default function Index() {
+const Index = () => {
   const { getIdTokenClaims, isAuthenticated } = useLogto();
   const { user, setUser } = useContext(UserContext);
   const router = useRouter();
@@ -50,4 +50,6 @@ export default function Index() {
       {/* <Redirect href={"/Landing"} /> */}
     </View>
   );
-}
+};
+
+export default Index;

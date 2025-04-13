@@ -12,7 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Colors from "@/services/Colors";
 import { useLogto } from "@logto/rn";
 
-export default function Landing() {
+const Landing = () => {
   const { signIn, signOut, isAuthenticated } = useLogto();
   const imageList = [
     require("../assets/images/1.jpg"),
@@ -119,7 +119,7 @@ export default function Landing() {
       </View>
     </GestureHandlerRootView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   image: {
@@ -139,3 +139,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
+export default Landing;

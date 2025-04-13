@@ -4,7 +4,7 @@ import { LogtoProvider, LogtoConfig, UserScope } from "@logto/rn";
 import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 
-export default function RootLayout() {
+const RootLayout = () => {
   const [loaded, error] = useFonts({
     outfit: require("../assets/fonts/Outfit-Regular.ttf"),
     "outfit-bold": require("../assets/fonts/Outfit-Bold.ttf"),
@@ -38,4 +38,6 @@ export default function RootLayout() {
       </UserContext.Provider>
     </LogtoProvider>
   );
-}
+};
+
+export default RootLayout;
