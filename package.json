@@ -17,6 +17,7 @@
   "dependencies": {
     "@animatereactnative/marquee": "^0.5.2",
     "@expo/vector-icons": "^14.0.2",
+    "@google/genai": "^0.8.0",
     "@logto/rn": "^0.4.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
@@ -36,7 +37,6 @@
     "expo-symbols": "~0.2.2",
     "expo-system-ui": "~4.0.9",
     "expo-web-browser": "~14.0.2",
-    "openai": "^4.93.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.9",
