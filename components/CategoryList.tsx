@@ -10,7 +10,7 @@ const CategoryList = () => {
 
   const GetCategoryList = async () => {
     const result = await GlobalApi.GetCategories();
-    console.log(result.data.data);
+    // console.log(result.data.data);
     setCategoryList(result?.data?.data);
   };
   return (

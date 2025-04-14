@@ -1,12 +1,13 @@
-import { Text, TouchableOpacity, View } from "react-native";
-import React from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import React, { FC } from "react";
 import Colors from "@/services/Colors";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
-const Button = ({ label, onPress, icon = "" }: any) => {
+const Button = ({ label, onPress, icon = "", loading = false }: any) => {
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={loading}
       style={{
         backgroundColor: Colors.PRIMARY,
         padding: 15,
@@ -19,7 +20,11 @@ const Button = ({ label, onPress, icon = "" }: any) => {
         justifyContent: "center",
       }}
     >
-      <Ionicons name={icon} size={20} color="white" />
+      {loading ? (
+        <ActivityIndicator color={Colors.WHITE} />
+      ) : (
+        <Ionicons name={icon} size={20} color="white" />
+      )}
       <Text
         style={{
           textAlign: "center",
