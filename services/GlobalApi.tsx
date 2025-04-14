@@ -27,7 +27,7 @@ const AiModel = async (prompt: string) =>
         items: {
           type: Type.OBJECT,
           properties: {
-            recipe_name: {
+            recipeName: {
               type: Type.STRING,
               description: "Name of the recipe",
               nullable: false,
@@ -37,9 +37,64 @@ const AiModel = async (prompt: string) =>
               description: "Ingredients of the recipe",
               nullable: false,
             },
+            description: {
+              type: Type.STRING,
+              description: "Description of the recipe",
+              nullable: false,
+            },
+            quantity: {
+              type: Type.STRING,
+              description: "Quantity of the recipe",
+              nullable: false,
+            },
+            steps: {
+              type: Type.STRING,
+              description: "Steps of the recipe",
+              nullable: false,
+            },
+            calories: {
+              type: Type.STRING,
+              description: "Calories of the recipe",
+              nullable: false,
+            },
+            cookTime: {
+              type: Type.STRING,
+              description: "CookTime of the recipe",
+              nullable: false,
+            },
+            serveTo: {
+              type: Type.STRING,
+              description: "Serve of the recipe",
+              nullable: false,
+            },
+            imagePrompt: {
+              type: Type.STRING,
+              description: "Image Generation Prompt of the recipe",
+              nullable: false,
+            },
           },
-          required: ["recipe_name", "ingredients"],
-          propertyOrdering: ["recipe_name", "ingredients"],
+          required: [
+            "recipeName",
+            "ingredients",
+            "description",
+            "quantity",
+            "steps",
+            "calories",
+            "cookTime",
+            "serveTo",
+            "imagePrompt",
+          ],
+          propertyOrdering: [
+            "recipeName",
+            "ingredients",
+            "description",
+            "quantity",
+            "steps",
+            "calories",
+            "cookTime",
+            "serveTo",
+            "imagePrompt",
+          ],
         },
       },
     },
