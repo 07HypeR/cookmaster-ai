@@ -101,7 +101,7 @@ const Landing = () => {
           Generate delicious recipes in seconds with the power of Al! 🍔✨
         </Text>
         <TouchableOpacity
-          onPress={async () => signIn("exp://192.168.0.102:8081")}
+          onPress={async () => signIn("exp://192.168.0.106:8081")}
           style={styles.button}
         >
           <Text
