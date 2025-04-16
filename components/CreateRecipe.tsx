@@ -12,21 +12,18 @@ import Colors from "@/services/Colors";
 import Button from "./Button";
 import GlobalApi from "@/services/GlobalApi";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
-import {
-  GENERATE_COMPLETE_RECIPE_PROMPT,
-  GENERATE_RECIPE_OPTION_PROMPT,
-} from "../services/Prompt";
+import { GENERATE_RECIPE_OPTION_PROMPT } from "./../services/Prompt";
+import { GENERATE_COMPLETE_RECIPE_PROMPT } from "./../services/Prompt";
 import LoadingDialog from "./LoadingDialog";
 
 const CreateRecipe = () => {
   const [userInput, setUserInput] = useState<string>();
-  const [recipeOptions, setRecipeOptions] = useState<any[]>([]);
+  const [recipeOptions, setRecipeOptions] = useState<any | null>([]);
   const [loading, setLoading] = useState(false);
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [openLoading, setOpenLoading] = useState(false);
 
   const OnGenerate = async () => {
-    if (loading) return;
     if (!userInput) {
       Alert.alert("Please enter details");
       return;
@@ -35,26 +32,38 @@ const CreateRecipe = () => {
     const result = await GlobalApi.AiModel(
       userInput + GENERATE_RECIPE_OPTION_PROMPT
     );
-    console.log(result.text);
-
-    setRecipeOptions(JSON.parse(result?.text ?? "{}"));
+    const content = result?.choices[0].message?.content;
+    console.log(result?.choices[0].message?.content);
+    content && setRecipeOptions(JSON.parse(content));
     setLoading(false);
     actionSheetRef.current?.show();
   };
 
   const GenerateCompleteRecipe = async (option: any) => {
-    if (openLoading) return;
     actionSheetRef.current?.hide();
     setOpenLoading(true);
     const PROMPT =
-      "recipe Name: " +
+      "RecipeName: " +
       option.recipeName +
       "Description: " +
       option?.description +
       GENERATE_COMPLETE_RECIPE_PROMPT;
+
     const result = await GlobalApi.AiModel(PROMPT);
-    console.log(result.text);
+
+    const content: any = result?.choices[0].message?.content;
+    const JSONContent = JSON.parse(content);
+    console.log(content);
+    console.log(JSONContent.imagePrompt);
+    await GenerateRecipeAiImage(JSONContent.imagePrompt);
     setOpenLoading(false);
+  };
+
+  const GenerateRecipeAiImage = async (imagePrompt: string) => {
+    const response = await GlobalApi.RecipeImageApi.post("/generate-image", {
+      prompt: imagePrompt,
+    });
+    console.log(response.data);
   };
 
   return (
@@ -76,7 +85,7 @@ const CreateRecipe = () => {
       />
       <Button
         label={"Generate Recipe"}
-        onPress={OnGenerate}
+        onPress={() => OnGenerate()}
         loading={loading}
         icon={"sparkles"}
       />
@@ -85,7 +94,7 @@ const CreateRecipe = () => {
         <View style={styles.actionSheetContainer}>
           <Text style={styles.heading}>Select Recipe</Text>
           <View>
-            {Array.isArray(recipeOptions) &&
+            {recipeOptions &&
               recipeOptions?.map((item: any, index: any) => (
                 <TouchableOpacity
                   key={index}
