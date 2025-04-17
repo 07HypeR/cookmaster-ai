@@ -26,7 +26,7 @@ const GetCategories = () => axiosClient.get("/categories?populate=*");
 const CreateNewRecipe = (data: any) =>
   axiosClient.post("/recipes", { data: data });
 const UpdateUser = (uid: any, data: any) =>
-  axiosClient.put("/user-lists" + uid, { data: data });
+  axiosClient.put("/user-lists/" + uid, { data: data });
 
 const AiModel = async (prompt: string) =>
   await openai.chat.completions.create({

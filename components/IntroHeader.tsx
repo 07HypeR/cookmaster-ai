@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Switch, Text, View } from "react-native";
+import { Image, Platform, StyleSheet, Switch, Text, View } from "react-native";
 import React, { useContext, useState } from "react";
 import { UserContext } from "@/context/UserContext";
 
@@ -13,6 +13,7 @@ const IntroHeader = () => {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        ...(Platform.OS === "ios" ? { marginVertical: 30 } : {}),
       }}
     >
       <View

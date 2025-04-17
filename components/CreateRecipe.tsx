@@ -214,7 +214,8 @@ const styles = StyleSheet.create({
   },
   recipeOptionContainer: {
     padding: 15,
-    borderWidth: 0.2,
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
     borderRadius: 15,
     marginTop: 15,
   },
