@@ -22,26 +22,41 @@ const CreateRecipe = () => {
   const [loading, setLoading] = useState(false);
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [openLoading, setOpenLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingFullRecipe, setIsGeneratingFullRecipe] = useState(false);
 
   const OnGenerate = async () => {
+    if (isGenerating) return;
     if (!userInput) {
       Alert.alert("Please enter details");
       return;
     }
+
+    setIsGenerating(true);
     setLoading(true);
-    const result = await GlobalApi.AiModel(
-      userInput + GENERATE_RECIPE_OPTION_PROMPT
-    );
-    const content = result?.choices[0].message?.content;
-    console.log(result?.choices[0].message?.content);
-    content && setRecipeOptions(JSON.parse(content));
-    setLoading(false);
-    actionSheetRef.current?.show();
+
+    try {
+      const result = await GlobalApi.AiModel(
+        userInput + GENERATE_RECIPE_OPTION_PROMPT
+      );
+      const content = result?.choices[0].message?.content;
+      console.log(result?.choices[0].message?.content);
+
+      content && setRecipeOptions(JSON.parse(content));
+      actionSheetRef.current?.show();
+    } catch (error) {
+      console.error("Error generating options", error);
+    } finally {
+      setLoading(false);
+      setIsGenerating(false);
+    }
   };
 
   const GenerateCompleteRecipe = async (option: any) => {
+    if (isGeneratingFullRecipe) return;
     actionSheetRef.current?.hide();
     setOpenLoading(true);
+    setIsGeneratingFullRecipe(true);
     const PROMPT =
       "RecipeName: " +
       option.recipeName +
@@ -57,6 +72,7 @@ const CreateRecipe = () => {
     console.log(JSONContent.imagePrompt);
     await GenerateRecipeAiImage(JSONContent.imagePrompt);
     setOpenLoading(false);
+    setIsGeneratingFullRecipe(false);
   };
 
   const GenerateRecipeAiImage = async (imagePrompt: string) => {
