@@ -13,11 +13,20 @@ const openai = new OpenAI({
   apiKey: process.env.EXPO_PUBLIC_OPENROUTER_API_KEY,
 });
 
+const BASE_URL = "https://cookmasterimage-server.onrender.com/api";
+const RecipeImageApi = axios.create({
+  baseURL: BASE_URL,
+});
+
 const GetUserByEmail = (email: string) =>
   axiosClient.get("/user-lists?filters[email][$eq]=" + email);
 const CreateNewUser = (data: any) =>
   axiosClient.post("/user-lists", { data: data });
 const GetCategories = () => axiosClient.get("/categories?populate=*");
+const CreateNewRecipe = (data: any) =>
+  axiosClient.post("/recipes", { data: data });
+const UpdateUser = (uid: any, data: any) =>
+  axiosClient.put("/user-lists" + uid, { data: data });
 
 const AiModel = async (prompt: string) =>
   await openai.chat.completions.create({
@@ -25,10 +34,6 @@ const AiModel = async (prompt: string) =>
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
   });
-const BASE_URL = "https://cookmasterimage-server.onrender.com/api";
-const RecipeImageApi = axios.create({
-  baseURL: BASE_URL,
-});
 
 export default {
   GetUserByEmail,
@@ -36,4 +41,6 @@ export default {
   GetCategories,
   AiModel,
   RecipeImageApi,
+  CreateNewRecipe,
+  UpdateUser,
 };

@@ -7,7 +7,7 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import Colors from "@/services/Colors";
 import Button from "./Button";
 import GlobalApi from "@/services/GlobalApi";
@@ -15,8 +15,10 @@ import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import { GENERATE_RECIPE_OPTION_PROMPT } from "./../services/Prompt";
 import { GENERATE_COMPLETE_RECIPE_PROMPT } from "./../services/Prompt";
 import LoadingDialog from "./LoadingDialog";
+import { UserContext } from "@/context/UserContext";
 
 const CreateRecipe = () => {
+  const { user, setUser } = useContext(UserContext);
   const [userInput, setUserInput] = useState<string>();
   const [recipeOptions, setRecipeOptions] = useState<any | null>([]);
   const [loading, setLoading] = useState(false);
@@ -24,6 +26,9 @@ const CreateRecipe = () => {
   const [openLoading, setOpenLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingFullRecipe, setIsGeneratingFullRecipe] = useState(false);
+  const [image, setImage] = useState("");
+
+  // console.log(user);
 
   const OnGenerate = async () => {
     if (isGenerating) return;
@@ -70,7 +75,10 @@ const CreateRecipe = () => {
     const JSONContent = JSON.parse(content);
     console.log(content);
     console.log(JSONContent.imagePrompt);
-    await GenerateRecipeAiImage(JSONContent.imagePrompt);
+    const imageUrl = await GenerateRecipeAiImage(JSONContent.imagePrompt);
+    const insertedRecordResult = await SaveDb(JSONContent, imageUrl);
+    console.log(insertedRecordResult);
+
     setOpenLoading(false);
     setIsGeneratingFullRecipe(false);
   };
@@ -79,9 +87,33 @@ const CreateRecipe = () => {
     const response = await GlobalApi.RecipeImageApi.post("/generate-image", {
       prompt: imagePrompt,
     });
-    console.log(response.data);
+    setImage(response.data.imageUrl);
+    console.log(response.data.imageUrl);
+
+    return response.data.imageUrl;
   };
 
+  const SaveDb = async (content: any, imageUrl: string) => {
+    const data = {
+      ...content,
+      recipeImage: imageUrl,
+      userEmail: user?.email,
+    };
+
+    const userData = {
+      name: user?.name,
+      email: user?.email,
+      picture: user?.picture,
+      credits: user?.credits - 1,
+      pref: null,
+    };
+
+    const result = await GlobalApi.CreateNewRecipe(data);
+    const updateUser = await GlobalApi.UpdateUser(user?.documentId, userData);
+    console.log(updateUser);
+    // setUser(updateUser);
+    return result.data.data;
+  };
   return (
     <View style={styles.container}>
       <Image
