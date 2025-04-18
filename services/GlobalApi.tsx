@@ -20,13 +20,15 @@ const RecipeImageApi = axios.create({
 
 const GetUserByEmail = (email: string) =>
   axiosClient.get("/user-lists?filters[email][$eq]=" + email);
-const CreateNewUser = (data: any) =>
+const CreateNewUser = async (data: any) =>
   axiosClient.post("/user-lists", { data: data });
 const GetCategories = () => axiosClient.get("/categories?populate=*");
 const CreateNewRecipe = (data: any) =>
   axiosClient.post("/recipes", { data: data });
 const UpdateUser = (uid: any, data: any) =>
   axiosClient.put("/user-lists/" + uid, { data: data });
+const GetRecipeByCategory = (category: string) =>
+  axiosClient.get("/recipes?filters[category][$containsi]=" + category);
 
 const AiModel = async (prompt: string) =>
   await openai.chat.completions.create({
@@ -43,4 +45,5 @@ export default {
   RecipeImageApi,
   CreateNewRecipe,
   UpdateUser,
+  GetRecipeByCategory,
 };
