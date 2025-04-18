@@ -5,6 +5,7 @@ import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import Colors from "@/services/Colors";
 
 const RootLayout = () => {
   const [loaded, error] = useFonts({
@@ -47,7 +48,8 @@ const RootLayout = () => {
           <Stack.Screen
             name="recipe-detail/index"
             options={{
-              headerTitle: "Detail",
+              headerTitle: "Recipe Details",
+              headerBackTitle: "Back",
               headerRight: () => (
                 <Ionicons name="share" size={24} color="black" />
               ),
