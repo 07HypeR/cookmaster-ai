@@ -3,6 +3,7 @@ import { useFonts } from "expo-font";
 import { LogtoProvider, LogtoConfig, UserScope } from "@logto/rn";
 import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
+import { Platform } from "react-native";
 
 const RootLayout = () => {
   const [loaded, error] = useFonts({
@@ -32,6 +33,14 @@ const RootLayout = () => {
             name="(tabs)"
             options={{
               headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="recipe-by-category/index"
+            options={{
+              headerTransparent: true,
+              headerTitle: "",
+              headerShown: Platform.OS !== "ios",
             }}
           />
         </Stack>
