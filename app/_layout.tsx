@@ -4,6 +4,7 @@ import { LogtoProvider, LogtoConfig, UserScope } from "@logto/rn";
 import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 import { Platform } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const RootLayout = () => {
   const [loaded, error] = useFonts({
@@ -41,6 +42,15 @@ const RootLayout = () => {
               headerTransparent: true,
               headerTitle: "",
               headerShown: Platform.OS !== "ios",
+            }}
+          />
+          <Stack.Screen
+            name="recipe-detail/index"
+            options={{
+              headerTitle: "Detail",
+              headerRight: () => (
+                <Ionicons name="share" size={24} color="black" />
+              ),
             }}
           />
         </Stack>

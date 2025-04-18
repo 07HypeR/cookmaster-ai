@@ -12,10 +12,10 @@ import Colors from "@/services/Colors";
 import Button from "./Button";
 import GlobalApi from "@/services/GlobalApi";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
-import { GENERATE_RECIPE_OPTION_PROMPT } from "./../services/Prompt";
-import { GENERATE_COMPLETE_RECIPE_PROMPT } from "./../services/Prompt";
 import LoadingDialog from "./LoadingDialog";
 import { UserContext } from "@/context/UserContext";
+import Prompt from "./../services/Prompt";
+import { useRouter } from "expo-router";
 
 const CreateRecipe = () => {
   const { user, setUser } = useContext(UserContext);
@@ -26,7 +26,7 @@ const CreateRecipe = () => {
   const [openLoading, setOpenLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingFullRecipe, setIsGeneratingFullRecipe] = useState(false);
-  const [image, setImage] = useState("");
+  const router = useRouter();
 
   // console.log(user);
 
@@ -42,7 +42,7 @@ const CreateRecipe = () => {
 
     try {
       const result = await GlobalApi.AiModel(
-        userInput + GENERATE_RECIPE_OPTION_PROMPT
+        userInput + Prompt.GENERATE_RECIPE_OPTION_PROMPT
       );
       const content = result?.choices[0].message?.content;
       console.log(result?.choices[0].message?.content);
@@ -67,7 +67,7 @@ const CreateRecipe = () => {
       option.recipeName +
       "Description: " +
       option?.description +
-      GENERATE_COMPLETE_RECIPE_PROMPT;
+      Prompt.GENERATE_COMPLETE_RECIPE_PROMPT;
 
     const result = await GlobalApi.AiModel(PROMPT);
 
@@ -78,7 +78,12 @@ const CreateRecipe = () => {
     const imageUrl = await GenerateRecipeAiImage(JSONContent.imagePrompt);
     const insertedRecordResult = await SaveDb(JSONContent, imageUrl);
     console.log(insertedRecordResult);
-
+    router.push({
+      pathname: "/recipe-detail",
+      params: {
+        recipeData: JSON.stringify(insertedRecordResult),
+      },
+    });
     setOpenLoading(false);
     setIsGeneratingFullRecipe(false);
   };
@@ -87,7 +92,6 @@ const CreateRecipe = () => {
     const response = await GlobalApi.RecipeImageApi.post("/generate-image", {
       prompt: imagePrompt,
     });
-    setImage(response.data.imageUrl);
     console.log(response.data.imageUrl);
 
     return response.data.imageUrl;
