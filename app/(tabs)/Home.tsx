@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import React from "react";
 import Colors from "@/services/Colors";
 import IntroHeader from "@/components/IntroHeader";
@@ -26,5 +26,3 @@ const Home = () => {
 };
 
 export default Home;
-
-const styles = StyleSheet.create({});

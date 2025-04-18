@@ -3,7 +3,7 @@ import GlobalApi from "@/services/GlobalApi";
 import { useLogto } from "@logto/rn";
 import { Redirect, useRouter } from "expo-router";
 import { useContext, useEffect } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
 const Index = () => {
   const { getIdTokenClaims, isAuthenticated } = useLogto();

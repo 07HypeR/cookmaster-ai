@@ -5,7 +5,6 @@ import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import Colors from "@/services/Colors";
 
 const RootLayout = () => {
   const [loaded, error] = useFonts({

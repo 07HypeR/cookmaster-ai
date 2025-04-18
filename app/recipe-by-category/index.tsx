@@ -1,11 +1,4 @@
-import {
-  FlatList,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, Platform, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Colors from "@/services/Colors";
@@ -85,5 +78,3 @@ const RecipeByCategory = () => {
 };
 
 export default RecipeByCategory;
-
-const styles = StyleSheet.create({});

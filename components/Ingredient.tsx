@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import React from "react";
 import Colors from "@/services/Colors";
 
@@ -86,5 +86,3 @@ const Ingredient = ({ ingredients }: any) => {
 };
 
 export default Ingredient;
-
-const styles = StyleSheet.create({});

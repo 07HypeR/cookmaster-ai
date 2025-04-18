@@ -1,4 +1,4 @@
-import { Image, Platform, StyleSheet, Switch, Text, View } from "react-native";
+import { Image, Platform, Switch, Text, View } from "react-native";
 import React, { useContext, useState } from "react";
 import { UserContext } from "@/context/UserContext";
 

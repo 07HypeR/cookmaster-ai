@@ -58,5 +58,3 @@ const RecipeCard = ({ recipe }: any) => {
 };
 
 export default RecipeCard;
-
-const styles = StyleSheet.create({});

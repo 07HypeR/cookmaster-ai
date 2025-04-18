@@ -1,4 +1,4 @@
-import { FlatList, Image, StyleSheet, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
 import RecipeIntro from "@/components/RecipeIntro";
@@ -46,5 +46,3 @@ const RecipeDetail = () => {
 };
 
 export default RecipeDetail;
-
-const styles = StyleSheet.create({});
