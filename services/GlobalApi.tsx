@@ -30,6 +30,10 @@ const UpdateUser = (uid: any, data: any) =>
 const GetRecipeByCategory = (category: string) =>
   axiosClient.get("/recipes?filters[category][$containsi]=" + category);
 const GetAllRecipeList = () => axiosClient.get("/recipes?sort[0]=id:desc");
+const GetAllRecipesByLimit = (limit: number) =>
+  axiosClient.get(
+    "/recipes?sort[0]=id:desc&pagination[start]=1&pagination[limit]=" + limit
+  );
 
 const AiModel = async (prompt: string) =>
   await openai.chat.completions.create({
@@ -48,4 +52,5 @@ export default {
   UpdateUser,
   GetRecipeByCategory,
   GetAllRecipeList,
+  GetAllRecipesByLimit,
 };
