@@ -16,6 +16,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 const RecipeByCategory = () => {
   const { categoryName } = useLocalSearchParams();
   const [recipeList, setRecipeList] = useState();
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,9 +24,11 @@ const RecipeByCategory = () => {
   }, []);
 
   const GetRecipeListByCategory = async () => {
+    setLoading(true);
     const result = await GlobalApi.GetRecipeByCategory(categoryName as string);
-    console.log(result.data.data);
+    console.log("---", result.data.data);
     setRecipeList(result?.data?.data);
+    setLoading(false);
   };
 
   return (
@@ -68,6 +71,8 @@ const RecipeByCategory = () => {
       <FlatList
         data={recipeList}
         numColumns={2}
+        refreshing={loading}
+        onRefresh={GetRecipeListByCategory}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => (
           <View style={{ flex: 1 }}>
