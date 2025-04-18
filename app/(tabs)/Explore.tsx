@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import Colors from "@/services/Colors";
 import GlobalApi from "@/services/GlobalApi";
@@ -50,5 +50,3 @@ const Explore = () => {
 };
 
 export default Explore;
-
-const styles = StyleSheet.create({});
