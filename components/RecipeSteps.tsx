@@ -15,7 +15,7 @@ const RecipeSteps = ({ steps }: any) => {
           fontSize: 20,
         }}
       >
-        RecipeSteps
+        Recipe Steps
       </Text>
 
       <FlatList
