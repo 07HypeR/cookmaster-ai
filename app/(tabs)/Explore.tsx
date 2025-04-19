@@ -1,4 +1,4 @@
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Platform, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import Colors from "@/services/Colors";
 import GlobalApi from "@/services/GlobalApi";
@@ -25,26 +25,32 @@ const Explore = () => {
         height: "100%",
       }}
     >
-      <Text
+      <View
         style={{
-          fontFamily: "outfit-bold",
-          fontSize: 30,
+          ...(Platform.OS === "ios" ? { marginVertical: 30 } : {}),
         }}
       >
-        Explore
-      </Text>
-      <FlatList
-        data={recipeList}
-        numColumns={2}
-        refreshing={loading}
-        onRefresh={GetAllRecipes}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
-          <View style={{ flex: 1 }}>
-            <RecipeCard recipe={item} />
-          </View>
-        )}
-      />
+        <Text
+          style={{
+            fontFamily: "outfit-bold",
+            fontSize: 30,
+          }}
+        >
+          Explore
+        </Text>
+        <FlatList
+          data={recipeList}
+          numColumns={2}
+          refreshing={loading}
+          onRefresh={GetAllRecipes}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item, index }) => (
+            <View style={{ flex: 1 }}>
+              <RecipeCard recipe={item} />
+            </View>
+          )}
+        />
+      </View>
     </View>
   );
 };

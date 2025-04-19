@@ -1,5 +1,6 @@
 import {
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -52,47 +53,53 @@ const Cookbook = () => {
         height: "100%",
       }}
     >
-      <Text
+      <View
         style={{
-          fontFamily: "outfit-bold",
-          fontSize: 30,
+          ...(Platform.OS === "ios" ? { marginVertical: 30 } : {}),
         }}
       >
-        Cookbook
-      </Text>
-      <View style={[styles.tabContainer, { marginBottom: 6, gap: 10 }]}>
-        <TouchableOpacity
-          onPress={() => {
-            setActiveTab(1), GetUserRecipeList();
+        <Text
+          style={{
+            fontFamily: "outfit-bold",
+            fontSize: 30,
           }}
-          style={[styles.tabContainer, { opacity: activeTab == 1 ? 1 : 0.4 }]}
         >
-          <Ionicons name="sparkles-sharp" size={24} color="black" />
-          <Text style={styles.tabText}>My Recipe</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            setActiveTab(2);
-            savedUserRecipeList();
-          }}
-          style={[styles.tabContainer, { opacity: activeTab == 2 ? 1 : 0.4 }]}
-        >
-          <Ionicons name="bookmark" size={24} color="black" />
-          <Text style={styles.tabText}>Saved</Text>
-        </TouchableOpacity>
+          Cookbook
+        </Text>
+        <View style={[styles.tabContainer, { marginBottom: 6, gap: 10 }]}>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTab(1), GetUserRecipeList();
+            }}
+            style={[styles.tabContainer, { opacity: activeTab == 1 ? 1 : 0.4 }]}
+          >
+            <Ionicons name="sparkles-sharp" size={24} color="black" />
+            <Text style={styles.tabText}>My Recipe</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTab(2);
+              savedUserRecipeList();
+            }}
+            style={[styles.tabContainer, { opacity: activeTab == 2 ? 1 : 0.4 }]}
+          >
+            <Ionicons name="bookmark" size={24} color="black" />
+            <Text style={styles.tabText}>Saved</Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={recipeList}
+          numColumns={2}
+          refreshing={loading}
+          onRefresh={activeTab == 1 ? GetUserRecipeList : savedUserRecipeList}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item, index }) => (
+            <View style={{ flex: 1 }}>
+              <RecipeCard recipe={item} />
+            </View>
+          )}
+        />
       </View>
-      <FlatList
-        data={recipeList}
-        numColumns={2}
-        refreshing={loading}
-        onRefresh={activeTab == 1 ? GetUserRecipeList : savedUserRecipeList}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
-          <View style={{ flex: 1 }}>
-            <RecipeCard recipe={item} />
-          </View>
-        )}
-      />
     </View>
   );
 };

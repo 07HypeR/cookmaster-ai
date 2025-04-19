@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import React, { useContext, useRef, useState } from "react";
 import Colors from "@/services/Colors";
@@ -119,62 +120,64 @@ const CreateRecipe = () => {
     return result.data.data;
   };
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("./../assets/images/pan.gif")}
-        style={styles.panImage}
-      />
-      <Text style={styles.heading}>
-        Warm up your stove, and let's get cooking!
-      </Text>
-      <Text style={styles.subHeading}>Make something for your LOVE ❤️</Text>
-      <TextInput
-        style={styles.textInput}
-        multiline={true}
-        numberOfLines={3}
-        onChangeText={(value) => setUserInput(value)}
-        placeholder="What do you want to create? Add ingredients etc."
-      />
-      <Button
-        label={"Generate Recipe"}
-        onPress={() => OnGenerate()}
-        loading={loading}
-        icon={"sparkles"}
-      />
+    <SafeAreaView>
       <LoadingDialog visible={openLoading} />
-      <ActionSheet ref={actionSheetRef}>
-        <View style={styles.actionSheetContainer}>
-          <Text style={styles.heading}>Select Recipe</Text>
-          <View>
-            {recipeOptions &&
-              recipeOptions?.map((item: any, index: any) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.recipeOptionContainer}
-                  onPress={() => GenerateCompleteRecipe(item)}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "outfit-bold",
-                      fontSize: 16,
-                    }}
+      <View style={styles.container}>
+        <Image
+          source={require("./../assets/images/pan.gif")}
+          style={styles.panImage}
+        />
+        <Text style={styles.heading}>
+          Warm up your stove, and let's get cooking!
+        </Text>
+        <Text style={styles.subHeading}>Make something for your LOVE ❤️</Text>
+        <TextInput
+          style={styles.textInput}
+          multiline={true}
+          numberOfLines={3}
+          onChangeText={(value) => setUserInput(value)}
+          placeholder="What do you want to create? Add ingredients etc."
+        />
+        <Button
+          label={"Generate Recipe"}
+          onPress={() => OnGenerate()}
+          loading={loading}
+          icon={"sparkles"}
+        />
+        <ActionSheet ref={actionSheetRef}>
+          <View style={styles.actionSheetContainer}>
+            <Text style={styles.heading}>Select Recipe</Text>
+            <View>
+              {recipeOptions &&
+                recipeOptions?.map((item: any, index: any) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.recipeOptionContainer}
+                    onPress={() => GenerateCompleteRecipe(item)}
                   >
-                    {item?.recipeName}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "outfit",
-                      color: Colors.GRAY,
-                    }}
-                  >
-                    {item?.description}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={{
+                        fontFamily: "outfit-bold",
+                        fontSize: 16,
+                      }}
+                    >
+                      {item?.recipeName}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "outfit",
+                        color: Colors.GRAY,
+                      }}
+                    >
+                      {item?.description}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+            </View>
           </View>
-        </View>
-      </ActionSheet>
-    </View>
+        </ActionSheet>
+      </View>
+    </SafeAreaView>
   );
 };
 

@@ -1,9 +1,10 @@
 import { UserContext } from "@/context/UserContext";
+import Colors from "@/services/Colors";
 import GlobalApi from "@/services/GlobalApi";
 import { useLogto } from "@logto/rn";
 import { Redirect, useRouter } from "expo-router";
-import { useContext, useEffect } from "react";
-import { View } from "react-native";
+import { useContext, useEffect, useState } from "react";
+import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 
 const Index = () => {
   const { getIdTokenClaims, isAuthenticated } = useLogto();
@@ -45,11 +46,42 @@ const Index = () => {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: Colors.WHITE,
       }}
     >
+      <Modal visible statusBarTranslucent>
+        <View style={styles.overlay}>
+          <View
+            style={{
+              padding: 20,
+              borderRadius: 15,
+              backgroundColor: Colors.PRIMARY,
+              alignItems: "center",
+            }}
+          >
+            <ActivityIndicator size={"large"} color={Colors.WHITE} />
+            <Text style={styles.text}>Please wait! Logging In...</Text>
+          </View>
+        </View>
+      </Modal>
       {/* <Redirect href={"/Landing"} /> */}
     </View>
   );
 };
 
 export default Index;
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.WHITE,
+  },
+  text: {
+    marginTop: 10,
+    color: Colors.WHITE,
+    fontSize: 16,
+    fontFamily: "outfit",
+  },
+});
