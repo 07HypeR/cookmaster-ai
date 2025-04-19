@@ -55,7 +55,7 @@ const Cookbook = () => {
       <Text
         style={{
           fontFamily: "outfit-bold",
-          fontSize: 35,
+          fontSize: 30,
         }}
       >
         Cookbook
