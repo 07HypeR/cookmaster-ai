@@ -38,6 +38,9 @@ const GetUserCreatedRecipe = (userEmail: string) =>
   axiosClient.get("/recipes?filters[userEmail][$eq]=" + userEmail);
 const SaveUserFavRecipe = (data: any) =>
   axiosClient.post("/user-favorites", { data: data });
+const SavedRecipeList = (userEmail: string) =>
+  axiosClient.get("/user-favorites?filters[userEmail][$eq]=" + userEmail);
+const GetSavedRecipes = (query: string) => axiosClient.get("/recipes?" + query);
 
 const AiModel = async (prompt: string) =>
   await openai.chat.completions.create({
@@ -59,4 +62,6 @@ export default {
   GetAllRecipesByLimit,
   GetUserCreatedRecipe,
   SaveUserFavRecipe,
+  SavedRecipeList,
+  GetSavedRecipes,
 };
