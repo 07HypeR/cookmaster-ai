@@ -1,9 +1,31 @@
-import { View, Image, Text, StyleSheet } from "react-native";
-import React from "react";
+import {
+  View,
+  Image,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import React, { useContext, useState } from "react";
 import Colors from "@/services/Colors";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { UserContext } from "@/context/UserContext";
+import GlobalApi from "@/services/GlobalApi";
 
 const RecipeIntro = ({ recipe }: any) => {
+  const { user } = useContext(UserContext);
+  const [saved, setSaved] = useState(false);
+  const SaveRecipe = async () => {
+    const data = {
+      userEmail: user?.email,
+      recipeDocId: recipe?.documentId,
+    };
+    const result = await GlobalApi.SaveUserFavRecipe(data);
+    console.log(result);
+    Alert.alert("Saved!", "Recipe Saved in your cookbook!");
+    setSaved(true);
+  };
+  const removeSavedRecipe = async () => {};
   return (
     <View>
       <Image
@@ -14,15 +36,33 @@ const RecipeIntro = ({ recipe }: any) => {
           borderRadius: 20,
         }}
       />
-      <Text
+      <View
         style={{
-          fontFamily: "outfit",
-          fontSize: 25,
-          marginTop: 7,
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        {recipe.recipeName}
-      </Text>
+        <Text
+          style={{
+            fontFamily: "outfit",
+            fontSize: 25,
+            marginTop: 7,
+          }}
+        >
+          {recipe.recipeName}
+        </Text>
+        <TouchableOpacity
+          onPress={() => (!saved ? SaveRecipe() : removeSavedRecipe())}
+        >
+          {!saved ? (
+            <Ionicons name="bookmark-outline" size={24} color="#000" />
+          ) : (
+            <Ionicons name="bookmark" size={24} color={Colors.PRIMARY} />
+          )}
+        </TouchableOpacity>
+      </View>
       <Text
         style={{
           fontFamily: "outfit-bold",
