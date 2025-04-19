@@ -2,7 +2,7 @@ import axios from "axios";
 import OpenAI from "openai";
 
 const axiosClient = axios.create({
-  baseURL: "http://192.168.0.106:1337/api",
+  baseURL: "https://cookmaster-ai-server.onrender.com/api",
   headers: {
     Authorization: `Bearer ${process.env.EXPO_PUBLIC_STRAPI_API_KEY}`,
   },
