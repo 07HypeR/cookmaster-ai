@@ -44,7 +44,7 @@ const GetSavedRecipes = (query: string) => axiosClient.get("/recipes?" + query);
 
 const AiModel = async (prompt: string) =>
   await openai.chat.completions.create({
-    model: "google/gemini-2.0-flash-001",
+    model: "google/gemini-2.0-flash-exp:free",
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
   });
