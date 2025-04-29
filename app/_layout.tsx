@@ -13,8 +13,8 @@ const RootLayout = () => {
   });
 
   const config: LogtoConfig = {
-    endpoint: "https://5tdeyd.logto.app/",
-    appId: "4zwpnq54lv79sneejxcg0",
+    endpoint: "https://apnjw7.logto.app/",
+    appId: "uyll9p493rolrx9bc6t4v",
     scopes: [UserScope.Email],
   };
 

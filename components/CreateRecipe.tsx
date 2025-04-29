@@ -137,6 +137,7 @@ const CreateRecipe = () => {
           numberOfLines={3}
           onChangeText={(value) => setUserInput(value)}
           placeholder="What do you want to create? Add ingredients etc."
+          placeholderTextColor={"#ccc"}
         />
         <Button
           label={"Generate Recipe"}

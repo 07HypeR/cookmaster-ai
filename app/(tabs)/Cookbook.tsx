@@ -15,7 +15,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 
 const Cookbook = () => {
   const { user } = useContext(UserContext);
-  const [recipeList, setRecipeList] = useState();
+  const [recipeList, setRecipeList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(1);
 
@@ -24,12 +24,17 @@ const Cookbook = () => {
   }, []);
 
   const GetUserRecipeList = async () => {
+    setLoading(true);
+    setRecipeList([]);
     const result = await GlobalApi.GetUserCreatedRecipe(user?.email);
     console.log(result.data.data);
-    setRecipeList(result.data.data);
+    setRecipeList(result.data.data || []);
+    setLoading(false);
   };
 
   const savedUserRecipeList = async () => {
+    setLoading(true);
+    setRecipeList([]);
     const result = await GlobalApi.SavedRecipeList(user?.email);
     console.log(result.data.data);
     const savedData = result.data.data;
@@ -40,9 +45,16 @@ const Cookbook = () => {
     });
     console.log(QueryFilter);
 
+    if (QueryFilter === "") {
+      setRecipeList([]);
+      setLoading(false);
+      return;
+    }
+
     const resp = await GlobalApi.GetSavedRecipes(QueryFilter);
     console.log(resp.data.data);
-    setRecipeList(resp.data.data);
+    setRecipeList(resp.data.data || []);
+    setLoading(false);
   };
 
   return (
@@ -87,18 +99,39 @@ const Cookbook = () => {
             <Text style={styles.tabText}>Saved</Text>
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={recipeList}
-          numColumns={2}
-          refreshing={loading}
-          onRefresh={activeTab == 1 ? GetUserRecipeList : savedUserRecipeList}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <View style={{ flex: 1 }}>
-              <RecipeCard recipe={item} />
-            </View>
-          )}
-        />
+        {!loading && recipeList?.length === 0 ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginTop: 250,
+            }}
+          >
+            <Ionicons name="sad-outline" size={60} color="gray" />
+            <Text
+              style={{
+                fontFamily: "outfit",
+                fontSize: 18,
+                color: "gray",
+                marginTop: 10,
+              }}
+            >
+              No saved recipes found.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={recipeList}
+            numColumns={2}
+            refreshing={loading}
+            onRefresh={activeTab == 1 ? GetUserRecipeList : savedUserRecipeList}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <View style={{ flex: 1 }}>
+                <RecipeCard recipe={item} />
+              </View>
+            )}
+          />
+        )}
       </View>
     </View>
   );

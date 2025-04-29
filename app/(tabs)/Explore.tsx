@@ -13,9 +13,11 @@ const Explore = () => {
   }, []);
 
   const GetAllRecipes = async () => {
+    setLoading(true);
     const result = await GlobalApi.GetAllRecipeList();
     console.log(result.data.data);
     setRecipeList(result.data.data);
+    setLoading(false);
   };
   return (
     <View

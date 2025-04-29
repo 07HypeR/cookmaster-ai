@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Button,
-} from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import React from "react";
 import { Marquee } from "@animatereactnative/marquee";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -13,7 +6,7 @@ import Colors from "@/services/Colors";
 import { useLogto } from "@logto/rn";
 
 const Landing = () => {
-  const { signIn, signOut, isAuthenticated } = useLogto();
+  const { signIn } = useLogto();
   const imageList = [
     require("../assets/images/1.jpg"),
     require("../assets/images/c1.jpg"),
@@ -101,7 +94,7 @@ const Landing = () => {
           Generate delicious recipes in seconds with the power of Al! 🍔✨
         </Text>
         <TouchableOpacity
-          onPress={async () => signIn("exp://192.168.0.106:8081")}
+          onPress={async () => signIn("exp://192.168.0.108:8081")}
           style={styles.button}
         >
           <Text
