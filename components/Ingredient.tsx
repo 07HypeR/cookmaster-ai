@@ -32,20 +32,20 @@ const Ingredient = ({ ingredients }: any) => {
 
       <FlatList
         data={ingredients}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <View
             style={{
-              display: "flex",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
+              marginBottom: 12,
             }}
           >
             <View
               style={{
-                display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
+                flex: 1,
                 gap: 7,
                 padding: 8,
               }}
@@ -64,20 +64,31 @@ const Ingredient = ({ ingredients }: any) => {
                 style={{
                   fontFamily: "outfit",
                   fontSize: 18,
+                  flexShrink: 1,
+                  flexWrap: "wrap",
                 }}
               >
                 {item.ingredient}
               </Text>
             </View>
-            <Text
+
+            <View
               style={{
-                fontFamily: "outfit",
-                fontSize: 20,
-                color: Colors.GRAY,
+                maxWidth: "40%",
+                marginLeft: 4,
               }}
             >
-              {item?.quantity}
-            </Text>
+              <Text
+                style={{
+                  fontFamily: "outfit",
+                  fontSize: 18,
+                  color: Colors.GRAY,
+                  textAlign: "right",
+                }}
+              >
+                {item.quantity}
+              </Text>
+            </View>
           </View>
         )}
       />
