@@ -6,26 +6,40 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Colors from "@/services/Colors";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { UserContext } from "@/context/UserContext";
-import GlobalApi from "@/services/GlobalApi";
+import { useSavedRecipesStore } from "@/services/useSavedRecipesStore";
 
 const RecipeIntro = ({ recipe }: any) => {
   const { user } = useContext(UserContext);
-  const [saved, setSaved] = useState(false);
-  const SaveRecipe = async () => {
-    const data = {
-      userEmail: user?.email,
-      recipeDocId: recipe?.documentId,
-    };
-    const result = await GlobalApi.SaveUserFavRecipe(data);
-    console.log(result);
-    Alert.alert("Saved!", "Recipe Saved in your cookbook!");
-    setSaved(true);
+  const { fetchSavedRecipes, isRecipeSaved, saveRecipe, removeRecipe } =
+    useSavedRecipesStore();
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchSavedRecipes(user.email);
+    }
+  }, [user]);
+
+  const saved = isRecipeSaved(recipe?.documentId);
+
+  const handleToggleSave = async () => {
+    if (!user?.email) return;
+
+    try {
+      if (saved) {
+        await removeRecipe(user.email, recipe.documentId);
+        Alert.alert("Removed", "Recipe removed from your cookbook.");
+      } else {
+        await saveRecipe(user.email, recipe.documentId);
+        Alert.alert("Saved", "Recipe saved to your cookbook.");
+      }
+    } catch (err) {
+      Alert.alert("Error", "Something went wrong.");
+    }
   };
-  const removeSavedRecipe = async () => {};
   return (
     <View>
       <Image
@@ -53,9 +67,7 @@ const RecipeIntro = ({ recipe }: any) => {
         >
           {recipe.recipeName}
         </Text>
-        <TouchableOpacity
-          onPress={() => (!saved ? SaveRecipe() : removeSavedRecipe())}
-        >
+        <TouchableOpacity onPress={handleToggleSave}>
           {!saved ? (
             <Ionicons name="bookmark-outline" size={24} color="#000" />
           ) : (

@@ -41,6 +41,26 @@ const SaveUserFavRecipe = (data: any) =>
 const SavedRecipeList = (userEmail: string) =>
   axiosClient.get("/user-favorites?filters[userEmail][$eq]=" + userEmail);
 const GetSavedRecipes = (query: string) => axiosClient.get("/recipes?" + query);
+const RemoveUserFavRecipe = async (userEmail: string, recipeDocId: string) => {
+  try {
+    // Step 1: Fetch the favorite entry
+    const res = await axiosClient.get(
+      `/user-favorites?filters[userEmail][$eq]=${userEmail}&filters[recipeDocId][$eq]=${recipeDocId}`
+    );
+
+    const favItem = res.data?.data?.[0]; // May be undefined
+
+    if (!favItem || !favItem.id) {
+      throw new Error("Favorite recipe not found in backend.");
+    }
+
+    // Step 2: Delete it by ID
+    return await axiosClient.delete(`/user-favorites/:${favItem.id}`);
+  } catch (err) {
+    console.error("Delete failed:", err);
+    throw err;
+  }
+};
 
 const AiModel = async (prompt: string) =>
   await openai.chat.completions.create({
@@ -64,4 +84,5 @@ export default {
   SaveUserFavRecipe,
   SavedRecipeList,
   GetSavedRecipes,
+  RemoveUserFavRecipe,
 };

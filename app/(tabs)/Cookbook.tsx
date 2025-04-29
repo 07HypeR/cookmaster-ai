@@ -20,8 +20,12 @@ const Cookbook = () => {
   const [activeTab, setActiveTab] = useState(1);
 
   useEffect(() => {
-    GetUserRecipeList();
-  }, []);
+    if (activeTab === 1) {
+      GetUserRecipeList();
+    } else {
+      savedUserRecipeList();
+    }
+  }, [activeTab]);
 
   const GetUserRecipeList = async () => {
     setLoading(true);
@@ -99,39 +103,45 @@ const Cookbook = () => {
             <Text style={styles.tabText}>Saved</Text>
           </TouchableOpacity>
         </View>
-        {!loading && recipeList?.length === 0 ? (
-          <View
-            style={{
-              alignItems: "center",
-              marginTop: 250,
-            }}
-          >
-            <Ionicons name="sad-outline" size={60} color="gray" />
-            <Text
-              style={{
-                fontFamily: "outfit",
-                fontSize: 18,
-                color: "gray",
-                marginTop: 10,
-              }}
-            >
-              No saved recipes found.
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={recipeList}
-            numColumns={2}
-            refreshing={loading}
-            onRefresh={activeTab == 1 ? GetUserRecipeList : savedUserRecipeList}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View style={{ flex: 1 }}>
-                <RecipeCard recipe={item} />
+        <FlatList
+          data={recipeList}
+          numColumns={2}
+          refreshing={loading}
+          onRefresh={activeTab === 1 ? GetUserRecipeList : savedUserRecipeList}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item, index) => item.id || index.toString()}
+          ListEmptyComponent={
+            !loading ? (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginTop: 250,
+                }}
+              >
+                <Ionicons name="sad-outline" size={60} color="gray" />
+                <Text
+                  style={{
+                    fontFamily: "outfit",
+                    fontSize: 18,
+                    color: "gray",
+                    marginTop: 10,
+                  }}
+                >
+                  {activeTab === 1
+                    ? "No recipes found."
+                    : "No saved recipes found."}
+                </Text>
               </View>
-            )}
-          />
-        )}
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <View style={{ flex: 1 }}>
+              <RecipeCard recipe={item} />
+            </View>
+          )}
+        />
       </View>
     </View>
   );
