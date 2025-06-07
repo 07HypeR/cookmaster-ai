@@ -11,11 +11,10 @@ import React, { useContext } from "react";
 import Colors from "@/services/Colors";
 import { UserContext } from "@/context/UserContext";
 import { useRouter } from "expo-router";
-import { useLogto } from "@logto/rn";
 
 const Profile = () => {
   const { user } = useContext(UserContext);
-  const { signOut } = useLogto();
+
   const option = [
     {
       name: "Create New Recipe",
@@ -41,8 +40,7 @@ const Profile = () => {
   const router = useRouter();
   const onOptionClick = async (option: any) => {
     if (option.path === "logout") {
-      await signOut();
-      router.replace("/Landing");
+      router.replace("/");
       return;
     }
     router.push(option.path);
@@ -57,7 +55,7 @@ const Profile = () => {
     >
       <View
         style={{
-          ...(Platform.OS === "ios" ? { marginVertical: 30 } : {}),
+          marginTop: Platform.OS === "ios" ? 40 : 40,
         }}
       >
         <Text

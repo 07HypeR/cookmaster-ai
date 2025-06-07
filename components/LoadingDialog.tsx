@@ -4,7 +4,7 @@ import Colors from "@/services/Colors";
 
 const LoadingDialog = ({ visible = false, text = "Loading..." }: any) => {
   return (
-    <Modal transparent visible={visible}>
+    <Modal transparent visible={visible} statusBarTranslucent={true}>
       <View style={styles.overlay}>
         <View
           style={{

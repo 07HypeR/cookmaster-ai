@@ -1,16 +1,11 @@
 import axios from "axios";
-import OpenAI from "openai";
 
+// Create axios instance
 const axiosClient = axios.create({
   baseURL: "https://cookmaster-ai-server.onrender.com/api",
   headers: {
     Authorization: `Bearer ${process.env.EXPO_PUBLIC_STRAPI_API_KEY}`,
   },
-});
-
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.EXPO_PUBLIC_OPENROUTER_API_KEY,
 });
 
 const BASE_URL = "https://cookmasterimage-server.onrender.com/api";
@@ -62,12 +57,25 @@ const RemoveUserFavRecipe = async (userEmail: string, recipeDocId: string) => {
   }
 };
 
-const AiModel = async (prompt: string) =>
-  await openai.chat.completions.create({
-    model: "google/gemini-2.0-flash-exp:free",
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-  });
+// Gemini AI Model API
+const GEMINI_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+
+export const AiModel = async (PROMPT: string) =>
+  await axios.post(
+    `${GEMINI_API_URL}?key=${API_KEY}`,
+    {
+      contents: [
+        {
+          parts: [{ text: PROMPT }],
+        },
+      ],
+    },
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 
 export default {
   GetUserByEmail,

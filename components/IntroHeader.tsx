@@ -13,7 +13,7 @@ const IntroHeader = () => {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        ...(Platform.OS === "ios" ? { marginVertical: 30 } : {}),
+        marginTop: Platform.OS === "ios" ? 40 : 40,
       }}
     >
       <View

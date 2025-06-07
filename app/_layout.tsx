@@ -1,10 +1,24 @@
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
-import { LogtoProvider, LogtoConfig, UserScope } from "@logto/rn";
 import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import CustomToast from "../shared/CustomToast";
+import Toast, {
+  ToastConfig,
+  ToastConfigParams,
+} from "react-native-toast-message";
+
+const toastConfig: ToastConfig = {
+  custom: (props: ToastConfigParams<any>) => (
+    <CustomToast
+      text1={props.text1 || ""}
+      text2={props.text2 || ""}
+      {...props}
+    />
+  ),
+};
 
 const RootLayout = () => {
   const [loaded, error] = useFonts({
@@ -12,24 +26,12 @@ const RootLayout = () => {
     "outfit-bold": require("../assets/fonts/Outfit-Bold.ttf"),
   });
 
-  const config: LogtoConfig = {
-    endpoint: "https://apnjw7.logto.app/",
-    appId: "uyll9p493rolrx9bc6t4v",
-    scopes: [UserScope.Email],
-  };
-
   const [user, setUser] = useState();
 
   return (
-    <LogtoProvider config={config}>
+    <>
       <UserContext.Provider value={{ user, setUser }}>
         <Stack>
-          <Stack.Screen
-            name="Landing"
-            options={{
-              headerShown: false,
-            }}
-          />
           <Stack.Screen
             name="index"
             options={{
@@ -38,6 +40,18 @@ const RootLayout = () => {
           />
           <Stack.Screen
             name="(tabs)"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="(auth)/signIn"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="(auth)/signUp"
             options={{
               headerShown: false,
             }}
@@ -62,7 +76,8 @@ const RootLayout = () => {
           />
         </Stack>
       </UserContext.Provider>
-    </LogtoProvider>
+      <Toast config={toastConfig} />
+    </>
   );
 };
 

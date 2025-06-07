@@ -45,10 +45,16 @@ const CreateRecipe = () => {
       const result = await GlobalApi.AiModel(
         userInput + Prompt.GENERATE_RECIPE_OPTION_PROMPT
       );
-      const content = result?.choices[0].message?.content;
-      console.log(result?.choices[0].message?.content);
-
-      content && setRecipeOptions(JSON.parse(content));
+      const extractJson =
+        result.data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      const jsonMatch = extractJson.match(/```json\n([\s\S]*?)\n```/);
+      if (!jsonMatch) {
+        throw new Error("Ai response dose not contain JSON");
+      }
+      const jsonString = jsonMatch[1];
+      const parsedJsonResp = JSON.parse(jsonString || "{}");
+      console.log(parsedJsonResp);
+      parsedJsonResp && setRecipeOptions(parsedJsonResp);
       actionSheetRef.current?.show();
     } catch (error) {
       console.error("Error generating options", error);
@@ -72,12 +78,18 @@ const CreateRecipe = () => {
 
     const result = await GlobalApi.AiModel(PROMPT);
 
-    const content: any = result?.choices[0].message?.content;
-    const JSONContent = JSON.parse(content);
-    console.log(content);
-    console.log(JSONContent.imagePrompt);
-    const imageUrl = await GenerateRecipeAiImage(JSONContent.imagePrompt);
-    const insertedRecordResult = await SaveDb(JSONContent, imageUrl);
+    const extractJson =
+      result.data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const jsonMatch = extractJson.match(/```json\n([\s\S]*?)\n```/);
+    if (!jsonMatch) {
+      throw new Error("Ai response dose not contain JSON");
+    }
+    const jsonString = jsonMatch[1];
+    const parsedJsonResp = JSON.parse(jsonString || "{}");
+    console.log(parsedJsonResp);
+
+    const imageUrl = await GenerateRecipeAiImage(parsedJsonResp.imagePrompt);
+    const insertedRecordResult = await SaveDb(parsedJsonResp, imageUrl);
     console.log(insertedRecordResult);
     router.push({
       pathname: "/recipe-detail",
@@ -98,9 +110,9 @@ const CreateRecipe = () => {
     return response.data.imageUrl;
   };
 
-  const SaveDb = async (content: any, imageUrl: string) => {
+  const SaveDb = async (parsedJsonResp: any, imageUrl: string) => {
     const data = {
-      ...content,
+      ...parsedJsonResp,
       recipeImage: imageUrl,
       userEmail: user?.email,
     };
@@ -137,7 +149,7 @@ const CreateRecipe = () => {
           numberOfLines={3}
           onChangeText={(value) => setUserInput(value)}
           placeholder="What do you want to create? Add ingredients etc."
-          placeholderTextColor={"#ccc"}
+          placeholderTextColor={"#b5d6c8"}
         />
         <Button
           label={"Generate Recipe"}

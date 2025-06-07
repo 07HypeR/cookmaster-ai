@@ -5,7 +5,7 @@ export default {
 
   GENERATE_COMPLETE_RECIPE_PROMPT: ` 
 
-        - As per recipe Name and Description, Give me all list of ingredients as ingredient ,
+        - As per recipeName and description, Give me all list of ingredients as ingredient ,
 
         - emoji icons for each ingredient as icon, quantity as quantity, along with detail step by step  recipe as steps
 
@@ -13,7 +13,7 @@ export default {
 
         - relastic image Text prompt as per reciepe as imagePrompt
 
-        -Give me category List for recipe from[Breakfast,Lunch,Dinner,Salad,Dessert,Fastfood,Drink,Cake] as category"
+        - Give me category List for recipe from[Breakfast,Lunch,Dinner,Salad,Dessert,Fastfood,Drink,Cake] as category"
 
         - Give me response in JSON format only`,
 };

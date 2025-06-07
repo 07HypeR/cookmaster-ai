@@ -1,4 +1,4 @@
-import { FlatList, ScrollView, StyleSheet } from "react-native";
+import { FlatList, Platform, ScrollView, StyleSheet } from "react-native";
 import React from "react";
 import Colors from "@/services/Colors";
 import IntroHeader from "@/components/IntroHeader";

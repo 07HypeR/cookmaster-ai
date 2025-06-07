@@ -71,7 +71,7 @@ const Cookbook = () => {
     >
       <View
         style={{
-          ...(Platform.OS === "ios" ? { marginVertical: 30 } : {}),
+          marginTop: Platform.OS === "ios" ? 40 : 40,
         }}
       >
         <Text
