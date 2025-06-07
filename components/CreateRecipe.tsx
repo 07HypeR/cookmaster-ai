@@ -54,7 +54,7 @@ const CreateRecipe = () => {
       const jsonString = jsonMatch[1];
       const parsedJsonResp = JSON.parse(jsonString || "{}");
       console.log(parsedJsonResp);
-      parsedJsonResp && setRecipeOptions(parsedJsonResp);
+      setRecipeOptions(parsedJsonResp);
       actionSheetRef.current?.show();
     } catch (error) {
       console.error("Error generating options", error);

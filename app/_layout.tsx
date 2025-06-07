@@ -4,6 +4,7 @@ import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { LogtoProvider, LogtoConfig, UserScope } from "@logto/rn";
 import CustomToast from "../shared/CustomToast";
 import Toast, {
   ToastConfig,
@@ -25,57 +26,51 @@ const RootLayout = () => {
     outfit: require("../assets/fonts/Outfit-Regular.ttf"),
     "outfit-bold": require("../assets/fonts/Outfit-Bold.ttf"),
   });
-
+  const config: LogtoConfig = {
+    endpoint: "https://apnjw7.logto.app/",
+    appId: "uyll9p493rolrx9bc6t4v",
+    scopes: [UserScope.Email],
+  };
   const [user, setUser] = useState();
 
   return (
     <>
-      <UserContext.Provider value={{ user, setUser }}>
-        <Stack>
-          <Stack.Screen
-            name="index"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="(auth)/signIn"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="(auth)/signUp"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="recipe-by-category/index"
-            options={{
-              headerTransparent: true,
-              headerTitle: "",
-              headerShown: Platform.OS !== "ios",
-            }}
-          />
-          <Stack.Screen
-            name="recipe-detail/index"
-            options={{
-              headerTitle: "Recipe Details",
-              headerBackTitle: "Back",
-              headerRight: () => (
-                <Ionicons name="share" size={24} color="black" />
-              ),
-            }}
-          />
-        </Stack>
-      </UserContext.Provider>
+      <LogtoProvider config={config}>
+        <UserContext.Provider value={{ user, setUser }}>
+          <Stack>
+            <Stack.Screen
+              name="index"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="recipe-by-category/index"
+              options={{
+                headerTransparent: true,
+                headerTitle: "",
+                headerShown: Platform.OS !== "ios",
+              }}
+            />
+            <Stack.Screen
+              name="recipe-detail/index"
+              options={{
+                headerTitle: "Recipe Details",
+                headerBackTitle: "Back",
+                headerRight: () => (
+                  <Ionicons name="share" size={24} color="black" />
+                ),
+              }}
+            />
+          </Stack>
+        </UserContext.Provider>
+      </LogtoProvider>
       <Toast config={toastConfig} />
     </>
   );
