@@ -11,11 +11,9 @@ import React, { useContext } from "react";
 import Colors from "@/services/Colors";
 import { UserContext } from "@/context/UserContext";
 import { useRouter } from "expo-router";
-import { useLogto } from "@logto/rn";
 
 const Profile = () => {
   const { user } = useContext(UserContext);
-  const { signOut } = useLogto();
 
   const option = [
     {
@@ -42,7 +40,6 @@ const Profile = () => {
   const router = useRouter();
   const onOptionClick = async (option: any) => {
     if (option.path === "logout") {
-      await signOut();
       router.replace("/");
       return;
     }

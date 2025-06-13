@@ -10,13 +10,11 @@ import {
 import { Marquee } from "@animatereactnative/marquee";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
-import { useLogto } from "@logto/rn";
 import Colors from "@/services/Colors";
 import { UserContext } from "@/context/UserContext";
 import GlobalApi from "@/services/GlobalApi";
 
 const Index = () => {
-  const { signIn, isAuthenticated, getIdTokenClaims } = useLogto();
   const router = useRouter();
   const { user, setUser } = useContext(UserContext);
 
@@ -32,49 +30,49 @@ const Index = () => {
     require("../assets/images/6.jpg"),
   ];
 
-  useEffect(() => {
-    const fetchAndCreateUser = async () => {
-      if (!isAuthenticated) return;
+  // useEffect(() => {
+  //   const fetchAndCreateUser = async () => {
+  //     if (!isAuthenticated) return;
 
-      try {
-        const userData = await getIdTokenClaims();
-        console.log("-- Logto User Data:", userData);
+  //     try {
+  //       const userData = await getIdTokenClaims();
+  //       console.log("-- Logto User Data:", userData);
 
-        if (!userData?.email) {
-          console.warn("Email not found in Logto userData.");
-          return;
-        }
+  //       if (!userData?.email) {
+  //         console.warn("Email not found in Logto userData.");
+  //         return;
+  //       }
 
-        const result = await GlobalApi.GetUserByEmail(userData.email);
-        console.log("User Lookup Result:", result.data.data);
+  //       const result = await GlobalApi.GetUserByEmail(userData.email);
+  //       console.log("User Lookup Result:", result.data.data);
 
-        if (!result.data.data || result.data.data.length === 0) {
-          // Create new user
-          const data = {
-            email: userData.email,
-            name: userData.name ?? "",
-            picture: userData.picture ?? "",
-          };
+  //       if (!result.data.data || result.data.data.length === 0) {
+  //         // Create new user
+  //         const data = {
+  //           email: userData.email,
+  //           name: userData.name ?? "",
+  //           picture: userData.picture ?? "",
+  //         };
 
-          const resp = await GlobalApi.CreateNewUser(data);
-          console.log("User created:", resp.data.data);
-          setUser(resp.data.data);
-          router.replace("/(tabs)/Home");
-        } else {
-          console.log("User already exists:", result.data.data[0]);
-          setUser(result.data.data[0]);
-          router.replace("/(tabs)/Home");
-        }
-      } catch (err: any) {
-        console.error(
-          "Error during user creation:",
-          err?.response?.data || err.message
-        );
-      }
-    };
+  //         const resp = await GlobalApi.CreateNewUser(data);
+  //         console.log("User created:", resp.data.data);
+  //         setUser(resp.data.data);
+  //         router.replace("/(tabs)/Home");
+  //       } else {
+  //         console.log("User already exists:", result.data.data[0]);
+  //         setUser(result.data.data[0]);
+  //         router.replace("/(tabs)/Home");
+  //       }
+  //     } catch (err: any) {
+  //       console.error(
+  //         "Error during user creation:",
+  //         err?.response?.data || err.message
+  //       );
+  //     }
+  //   };
 
-    fetchAndCreateUser();
-  }, [isAuthenticated]);
+  //   fetchAndCreateUser();
+  // }, [isAuthenticated]);
 
   return (
     <GestureHandlerRootView style={{ backgroundColor: "#E8F5E9" }}>
@@ -154,7 +152,7 @@ const Index = () => {
             Generate delicious recipes in seconds with the power of Al! 🍔✨
           </Text>
           <TouchableOpacity
-            onPress={async () => signIn("exp://192.168.0.101:8081")}
+            // onPress={async () => signIn("exp://192.168.0.101:8081")}
             style={styles.button}
           >
             <Text
