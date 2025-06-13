@@ -16,18 +16,21 @@ import {
 } from "react-native";
 
 import Toast from "react-native-toast-message";
-
+import { useSignUp } from "@clerk/clerk-expo";
 import GlobalApi from "@/services/GlobalApi";
 
 const SignUp = () => {
   const { user, setUser } = useContext(UserContext);
   const router = useRouter();
+  const { isLoaded, signUp, setActive } = useSignUp();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [code, setCode] = useState("");
 
   const showToastOrAlert = (title: string, message: string, icon?: string) => {
     if (Platform.OS === "ios") {
@@ -44,7 +47,105 @@ const SignUp = () => {
     }
   };
 
-  const onSignUp = async () => {};
+  const onSignUp = async () => {
+    if (!isLoaded) return;
+
+    // Start sign-up process using email and password provided
+    try {
+      await signUp.create({
+        emailAddress,
+        password,
+        username,
+      });
+
+      // Send user an email with verification code
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+
+      // Set 'pendingVerification' to true to display second form
+      // and capture OTP code
+      setPendingVerification(true);
+    } catch (err) {
+      // See https://clerk.com/docs/custom-flows/error-handling
+      // for more info on error handling
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  // Handle submission of verification form
+  const onVerifyPress = async () => {
+    if (!isLoaded) return;
+
+    try {
+      // Use the code the user provided to attempt verification
+      const signUpAttempt = await signUp.attemptEmailAddressVerification({
+        code,
+      });
+
+      // If verification was completed, set the session to active
+      // and redirect the user
+      if (signUpAttempt.status === "complete") {
+        router.replace("/(auth)/signIn");
+        await setActive({ session: signUpAttempt.createdSessionId });
+      } else {
+        // If the status is not complete, check why. User may need to
+        // complete further steps.
+        console.error(JSON.stringify(signUpAttempt, null, 2));
+      }
+    } catch (err) {
+      // See https://clerk.com/docs/custom-flows/error-handling
+      // for more info on error handling
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  if (pendingVerification) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+        >
+          <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ alignItems: "center", marginBottom: 20 }}>
+              <Image
+                source={require("@/assets/images/logo.png")}
+                style={{ width: 80, height: 80, borderRadius: 9 }}
+              />
+            </View>
+
+            <Text style={styles.title}>Verify Your Email 📩</Text>
+
+            <Text
+              style={[
+                styles.signUpText,
+                { textAlign: "center", marginBottom: 20 },
+              ]}
+            >
+              We've sent a verification code to your email.
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your verification code"
+              placeholderTextColor="#6BAF92"
+              value={code}
+              onChangeText={(text) => setCode(text)}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity style={styles.button} onPress={onVerifyPress}>
+              <Text style={styles.buttonText}>Verify</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   const handleGoogleSignUp = async () => {};
 
@@ -73,8 +174,8 @@ const SignUp = () => {
             style={styles.input}
             placeholder="Full Name"
             placeholderTextColor="#6BAF92"
-            value={name}
-            onChangeText={setName}
+            value={username}
+            onChangeText={(username) => setUsername(username)}
           />
 
           <TextInput
@@ -83,17 +184,17 @@ const SignUp = () => {
             placeholderTextColor="#6BAF92"
             keyboardType="email-address"
             autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
+            value={emailAddress}
+            onChangeText={(email) => setEmailAddress(email)}
           />
 
           <TextInput
             style={styles.input}
             placeholder="Password"
             placeholderTextColor="#6BAF92"
-            secureTextEntry
+            secureTextEntry={true}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(password) => setPassword(password)}
           />
 
           <TouchableOpacity style={styles.button} onPress={onSignUp}>

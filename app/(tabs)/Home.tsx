@@ -11,6 +11,10 @@ const Home = () => {
     <FlatList
       data={[]}
       renderItem={() => null}
+      style={{
+        backgroundColor: Colors.WHITE,
+        height: "100%",
+      }}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={
         <ScrollView

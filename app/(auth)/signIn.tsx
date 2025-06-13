@@ -1,6 +1,7 @@
 import { UserContext } from "@/context/UserContext";
 import GlobalApi from "@/services/GlobalApi";
 import { useRouter } from "expo-router";
+import { useSignIn } from "@clerk/clerk-expo";
 
 import React, { useContext, useState } from "react";
 import {
@@ -20,9 +21,10 @@ import Toast from "react-native-toast-message";
 
 const SignIn = () => {
   const { user, setUser } = useContext(UserContext);
-  const [email, setEmail] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const { signIn, setActive, isLoaded } = useSignIn();
 
   const showToastOrAlert = (title: string, message: string, icon?: string) => {
     if (Platform.OS === "ios") {
@@ -39,7 +41,32 @@ const SignIn = () => {
     }
   };
 
-  const onSignIn = async () => {};
+  const onSignIn = async () => {
+    if (!isLoaded) return;
+
+    // Start the sign-in process using the email and password provided
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: emailAddress,
+        password,
+      });
+
+      // If sign-in process is complete, set the created session as active
+      // and redirect the user
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.replace("/(tabs)/Home");
+      } else {
+        // If the status isn't complete, check why. User might need to
+        // complete further steps.
+        console.error(JSON.stringify(signInAttempt, null, 2));
+      }
+    } catch (err) {
+      // See https://clerk.com/docs/custom-flows/error-handling
+      // for more info on error handling
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
 
   const handleGoogleSignIn = () => {
     console.log("Google Sign In clicked");
@@ -73,17 +100,17 @@ const SignIn = () => {
             placeholderTextColor="#6BAF92"
             keyboardType="email-address"
             autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
+            value={emailAddress}
+            onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
           />
 
           <TextInput
             style={styles.input}
             placeholder="Password"
             placeholderTextColor="#6BAF92"
-            secureTextEntry
             value={password}
-            onChangeText={setPassword}
+            secureTextEntry={true}
+            onChangeText={(password) => setPassword(password)}
           />
 
           <TouchableOpacity style={styles.button} onPress={onSignIn}>

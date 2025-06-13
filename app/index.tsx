@@ -13,10 +13,12 @@ import { useRouter } from "expo-router";
 import Colors from "@/services/Colors";
 import { UserContext } from "@/context/UserContext";
 import GlobalApi from "@/services/GlobalApi";
+import { useAuth } from "@clerk/clerk-expo";
 
 const Index = () => {
   const router = useRouter();
   const { user, setUser } = useContext(UserContext);
+  const { isSignedIn } = useAuth();
 
   const imageList = [
     require("../assets/images/1.jpg"),
@@ -29,51 +31,14 @@ const Index = () => {
     require("../assets/images/5.jpg"),
     require("../assets/images/6.jpg"),
   ];
-
-  // useEffect(() => {
-  //   const fetchAndCreateUser = async () => {
-  //     if (!isAuthenticated) return;
-
-  //     try {
-  //       const userData = await getIdTokenClaims();
-  //       console.log("-- Logto User Data:", userData);
-
-  //       if (!userData?.email) {
-  //         console.warn("Email not found in Logto userData.");
-  //         return;
-  //       }
-
-  //       const result = await GlobalApi.GetUserByEmail(userData.email);
-  //       console.log("User Lookup Result:", result.data.data);
-
-  //       if (!result.data.data || result.data.data.length === 0) {
-  //         // Create new user
-  //         const data = {
-  //           email: userData.email,
-  //           name: userData.name ?? "",
-  //           picture: userData.picture ?? "",
-  //         };
-
-  //         const resp = await GlobalApi.CreateNewUser(data);
-  //         console.log("User created:", resp.data.data);
-  //         setUser(resp.data.data);
-  //         router.replace("/(tabs)/Home");
-  //       } else {
-  //         console.log("User already exists:", result.data.data[0]);
-  //         setUser(result.data.data[0]);
-  //         router.replace("/(tabs)/Home");
-  //       }
-  //     } catch (err: any) {
-  //       console.error(
-  //         "Error during user creation:",
-  //         err?.response?.data || err.message
-  //       );
-  //     }
-  //   };
-
-  //   fetchAndCreateUser();
-  // }, [isAuthenticated]);
-
+  useEffect(() => {
+    const fetchAndCreateUser = () => {
+      if (isSignedIn) {
+        router.replace("/(tabs)/Home");
+      }
+    };
+    fetchAndCreateUser();
+  }, [isSignedIn]);
   return (
     <GestureHandlerRootView style={{ backgroundColor: "#E8F5E9" }}>
       <View>
@@ -152,7 +117,7 @@ const Index = () => {
             Generate delicious recipes in seconds with the power of Al! 🍔✨
           </Text>
           <TouchableOpacity
-            // onPress={async () => signIn("exp://192.168.0.101:8081")}
+            onPress={() => router.push("/(auth)/signIn")}
             style={styles.button}
           >
             <Text
