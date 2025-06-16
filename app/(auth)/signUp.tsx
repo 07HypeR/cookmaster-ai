@@ -16,15 +16,17 @@ import {
 } from "react-native";
 
 import Toast from "react-native-toast-message";
-import { useSignUp } from "@clerk/clerk-expo";
+import { useSignUp, useUser } from "@clerk/clerk-expo";
 import GlobalApi from "@/services/GlobalApi";
 
 const SignUp = () => {
-  const { user, setUser } = useContext(UserContext);
+  const { setUser } = useContext(UserContext);
   const router = useRouter();
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { user } = useUser();
 
-  const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,9 +55,10 @@ const SignUp = () => {
     // Start sign-up process using email and password provided
     try {
       await signUp.create({
-        emailAddress,
+        emailAddress, // Optional, but can be useful
         password,
-        username,
+        firstName,
+        lastName,
       });
 
       // Send user an email with verification code
@@ -76,25 +79,36 @@ const SignUp = () => {
     if (!isLoaded) return;
 
     try {
-      // Use the code the user provided to attempt verification
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
         code,
       });
 
-      // If verification was completed, set the session to active
-      // and redirect the user
       if (signUpAttempt.status === "complete") {
-        router.replace("/(auth)/signIn");
+        // 1. Set active session
         await setActive({ session: signUpAttempt.createdSessionId });
+
+        // 2. Get Clerk user data
+        const createdUser = signUpAttempt.create;
+
+        const data = {
+          email: user?.primaryEmailAddress?.emailAddress || emailAddress,
+          name: user?.fullName || `${firstName} ${lastName}`,
+          picture: user?.hasImage?.valueOf() ? user?.imageUrl : null,
+          // Save Clerk ID to link
+        };
+
+        // 3. Call your Strapi API to create user
+        await GlobalApi.CreateNewUser(data);
+        setUser(data);
+        console.log("User created successfully:", data);
+
+        // 4. Navigate to sign-in or home
+        router.replace("/(tabs)/Home");
       } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error(JSON.stringify(signUpAttempt, null, 2));
+        console.error("Verification not complete:", signUpAttempt);
       }
     } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+      console.error("Verification error:", JSON.stringify(err, null, 2));
     }
   };
 
@@ -172,10 +186,17 @@ const SignUp = () => {
 
           <TextInput
             style={styles.input}
-            placeholder="Full Name"
+            placeholder="First Name"
             placeholderTextColor="#6BAF92"
-            value={username}
-            onChangeText={(username) => setUsername(username)}
+            value={firstName}
+            onChangeText={(firstName) => setFirstName(firstName)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Last Name"
+            placeholderTextColor="#6BAF92"
+            value={lastName}
+            onChangeText={(lastName) => setLastName(lastName)}
           />
 
           <TextInput

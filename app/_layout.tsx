@@ -1,7 +1,7 @@
-import { Stack } from "expo-router";
+import { SplashScreen, Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { UserContext } from "@/context/UserContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { ClerkProvider } from "@clerk/clerk-expo";
@@ -23,17 +23,32 @@ const toastConfig: ToastConfig = {
 };
 
 const RootLayout = () => {
-  const [loaded, error] = useFonts({
+  const [user, setUser] = useState();
+  const [loaded] = useFonts({
     outfit: require("../assets/fonts/Outfit-Regular.ttf"),
     "outfit-bold": require("../assets/fonts/Outfit-Bold.ttf"),
   });
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
 
-  const [user, setUser] = useState();
+  if (!loaded) {
+    return null;
+  }
+
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+  if (!publishableKey) {
+    throw new Error(
+      "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
+    );
+  }
 
   return (
     <>
       <UserContext.Provider value={{ user, setUser }}>
-        <ClerkProvider tokenCache={tokenCache}>
+        <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
           <Stack>
             <Stack.Screen
               name="index"

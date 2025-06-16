@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
     borderColor: "#A5D6A7",
     borderWidth: 1,
     fontFamily: "outfit",
+    color: "#2E7D32",
   },
   button: {
     backgroundColor: "#43A047",

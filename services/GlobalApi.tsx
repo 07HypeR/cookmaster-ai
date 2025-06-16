@@ -15,11 +15,8 @@ const RecipeImageApi = axios.create({
 
 const GetUserByEmail = (email: string) =>
   axiosClient.get("/user-lists?filters[email][$eq]=" + email);
-const CreateNewUser = async (data: {
-  email: string;
-  name: string;
-  picture: string;
-}) => axiosClient.post("/user-lists", { data });
+const CreateNewUser = async (data: any) =>
+  axiosClient.post("/user-lists", { data: data });
 const GetCategories = () => axiosClient.get("/categories?populate=*");
 const CreateNewRecipe = (data: any) =>
   axiosClient.post("/recipes", { data: data });
