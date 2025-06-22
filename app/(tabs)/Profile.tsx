@@ -11,10 +11,11 @@ import React, { useContext } from "react";
 import Colors from "@/services/Colors";
 import { UserContext } from "@/context/UserContext";
 import { useRouter } from "expo-router";
-import { useClerk } from "@clerk/clerk-expo";
+import { useClerk, useUser } from "@clerk/clerk-expo";
 
 const Profile = () => {
-  const { user } = useContext(UserContext);
+  // const { user } = useContext(UserContext);
+  const { user } = useUser();
   const { signOut } = useClerk();
 
   const option = [
@@ -77,7 +78,11 @@ const Profile = () => {
           }}
         >
           <Image
-            source={{ uri: user?.picture }}
+            source={
+              user?.imageUrl
+                ? { uri: user.imageUrl }
+                : require("../../assets/images/user.png")
+            }
             style={{
               width: 80,
               height: 80,
@@ -91,7 +96,7 @@ const Profile = () => {
               marginTop: 20,
             }}
           >
-            {user?.name}
+            {user?.fullName}
           </Text>
           <Text
             style={{
@@ -100,7 +105,7 @@ const Profile = () => {
               color: Colors.GRAY,
             }}
           >
-            {user?.email}
+            {user?.primaryEmailAddress?.emailAddress}
           </Text>
         </View>
 

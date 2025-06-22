@@ -59,6 +59,7 @@ const SignUp = () => {
         password,
         firstName,
         lastName,
+        username: firstName,
       });
 
       // Send user an email with verification code
@@ -89,11 +90,12 @@ const SignUp = () => {
 
         // 2. Get Clerk user data
         const createdUser = signUpAttempt.create;
+        console.log(createdUser);
 
         const data = {
           email: user?.primaryEmailAddress?.emailAddress || emailAddress,
           name: user?.fullName || `${firstName} ${lastName}`,
-          picture: user?.hasImage?.valueOf() ? user?.imageUrl : null,
+          picture: user?.imageUrl,
           // Save Clerk ID to link
         };
 
