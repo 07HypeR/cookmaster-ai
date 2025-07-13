@@ -29,7 +29,7 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const showToastOrAlert = (title: string, message: string, icon?: string) => {
+  const showToastOrAlert = (title, message, icon) => {
     if (Platform.OS === "ios") {
       Alert.alert(title, message);
     } else {

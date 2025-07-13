@@ -152,7 +152,7 @@ const Index = () => {
             Generate delicious recipes in seconds with the power of Al! 🍔✨
           </Text>
           <TouchableOpacity
-            // onPress={async () => signIn("exp://192.168.0.101:8081")}
+            onPress={() => router.push("/(auth)/sign-in")}
             style={styles.button}
           >
             <Text

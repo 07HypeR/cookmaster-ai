@@ -1,10 +1,11 @@
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
 import { useFonts } from "expo-font";
 import { UserContext } from "@/context/UserContext";
 import { useState } from "react";
 import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
+import { ClerkProvider } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import CustomToast from "../shared/CustomToast";
 import Toast, {
   ToastConfig,
@@ -32,38 +33,9 @@ const RootLayout = () => {
   return (
     <>
       <UserContext.Provider value={{ user, setUser }}>
-        <Stack>
-          <Stack.Screen
-            name="index"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="recipe-by-category/index"
-            options={{
-              headerTransparent: true,
-              headerTitle: "",
-              headerShown: Platform.OS !== "ios",
-            }}
-          />
-          <Stack.Screen
-            name="recipe-detail/index"
-            options={{
-              headerTitle: "Recipe Details",
-              headerBackTitle: "Back",
-              headerRight: () => (
-                <Ionicons name="share" size={24} color="black" />
-              ),
-            }}
-          />
-        </Stack>
+        <ClerkProvider tokenCache={tokenCache}>
+          <Slot />
+        </ClerkProvider>
       </UserContext.Provider>
 
       <Toast config={toastConfig} />

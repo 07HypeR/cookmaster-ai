@@ -24,7 +24,7 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  const showToastOrAlert = (title: string, message: string, icon?: string) => {
+  const showToastOrAlert = (title, message, icon) => {
     if (Platform.OS === "ios") {
       Alert.alert(title, message);
     } else {
@@ -105,7 +105,7 @@ const SignIn = () => {
 
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => router.push("/(auth)/signUp")}>
+            <TouchableOpacity onPress={() => router.push("/(auth)/sign-up")}>
               <Text style={styles.signUpLink}> Sign up</Text>
             </TouchableOpacity>
           </View>

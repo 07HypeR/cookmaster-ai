@@ -1,8 +1,11 @@
 import { Image, StyleSheet } from "react-native";
 import React from "react";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
+import { useAuth } from "@clerk/clerk-expo";
 
 const TabLayout = () => {
+  const { isSignedIn } = useAuth();
+  if (!isSignedIn) return <Redirect href={"/"} />;
   return (
     <Tabs
       screenOptions={{
