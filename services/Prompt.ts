@@ -1,19 +1,64 @@
 export default {
-  GENERATE_RECIPE_OPTION_PROMPT: `:Depends on user instruction create 3 different Recipe variant with Recipe Name with Emoji, 
+  GENERATE_RECIPE_OPTION_PROMPT: `Based on the user's request above, create 3 different recipe variants. Each recipe should include:
 
-2 line description and main ingredient list in JSON format with field recipeName,description,ingredients (without size) only`,
+1. A creative recipe name with an appropriate emoji
+2. A 2-line description explaining the dish
+3. A list of main ingredients (without quantities)
 
-  GENERATE_COMPLETE_RECIPE_PROMPT: ` 
+Please respond in the following JSON format:
+\`\`\`json
+[
+  {
+    "recipeName": "Recipe Name with Emoji",
+    "description": "Brief description of the recipe in 2 lines",
+    "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
+  },
+  {
+    "recipeName": "Recipe Name with Emoji", 
+    "description": "Brief description of the recipe in 2 lines",
+    "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
+  },
+  {
+    "recipeName": "Recipe Name with Emoji",
+    "description": "Brief description of the recipe in 2 lines", 
+    "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
+  }
+]
+\`\`\`
 
-        - As per recipeName and description, Give me all list of ingredients as ingredient ,
+Make sure to create diverse and interesting recipe options that match the user's request.`,
 
-        - emoji icons for each ingredient as icon, quantity as quantity, along with detail step by step  recipe as steps
+  GENERATE_COMPLETE_RECIPE_PROMPT: `Based on the recipe name and description provided, create a complete recipe with the following details:
 
-        - Total Calories as calories (only number), Minutes to cook as cookTime and serving number as serveTo
+- Complete list of ingredients with quantities and emoji icons
+- Detailed step-by-step cooking instructions
+- Total calories (number only)
+- Cooking time in minutes
+- Number of servings
+- Realistic image prompt for the recipe
+- Recipe category from: [Breakfast, Lunch, Dinner, Salad, Dessert, Fastfood, Drink, Cake]
 
-        - relastic image Text prompt as per reciepe as imagePrompt
-
-        - Give me category List for recipe from[Breakfast,Lunch,Dinner,Salad,Dessert,Fastfood,Drink,Cake] as category"
-
-        - Give me response in JSON format only`,
+Please respond in the following JSON format:
+\`\`\`json
+{
+  "recipeName": "Recipe Name",
+  "description": "Recipe description",
+  "ingredients": [
+    {
+      "ingredient": "ingredient name",
+      "quantity": "amount needed",
+      "icon": "🍅"
+    }
+  ],
+  "steps": [
+    "Step 1: Detailed instruction",
+    "Step 2: Detailed instruction"
+  ],
+  "calories": 350,
+  "cookTime": 30,
+  "serveTo": 4,
+  "imagePrompt": "Realistic image description for the recipe",
+  "category": "Dinner"
+}
+\`\`\``,
 };
