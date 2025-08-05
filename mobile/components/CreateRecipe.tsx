@@ -9,7 +9,8 @@ import {
   Dimensions,
   ActivityIndicator,
 } from "react-native";
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useRef, useState, useEffect } from "react";
+import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/shared/Colors";
 import Button from "./Button";
@@ -20,6 +21,7 @@ import { UserContext } from "@/context/UserContext";
 import Prompt from "./../services/Prompt";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import RecipeService from "@/services/RecipeService";
 
 const { width, height } = Dimensions.get("window");
 
@@ -78,15 +80,6 @@ const CreateRecipe = ({
   const GenerateCompleteRecipe = async (option: any) => {
     if (isGeneratingFullRecipe) return;
 
-    // Check if user has enough credits
-    if (!user || (user.credits || 0) <= 0) {
-      Alert.alert(
-        "Insufficient Credits",
-        "You don't have enough credits to generate a recipe. Please purchase more credits."
-      );
-      return;
-    }
-
     actionSheetRef.current?.hide();
     setOpenLoading(true);
     setIsGeneratingFullRecipe(true);
@@ -115,12 +108,16 @@ const CreateRecipe = ({
       const insertedRecordResult = await SaveDb(parsedJsonResp, imageUrl);
       console.log(insertedRecordResult);
 
-      router.push({
-        pathname: "/recipe-detail",
-        params: {
-          recipeId: insertedRecordResult.id.toString(),
-        },
-      });
+      if (insertedRecordResult?.id) {
+        router.push({
+          pathname: "/recipe-detail",
+          params: {
+            recipeId: insertedRecordResult.id.toString(),
+          },
+        });
+      } else {
+        throw new Error("Failed to get recipe ID after creation");
+      }
     } catch (error) {
       console.error("Error generating complete recipe:", error);
       Alert.alert("Error", "Failed to generate recipe. Please try again.");
@@ -156,38 +153,25 @@ const CreateRecipe = ({
         userEmail: user.email,
       };
 
-      const userData = {
-        name: user.name,
-        email: user.email,
-        picture: user.picture,
-        credits: (user.credits || 0) - 1,
-        pref: user.pref || {},
-      };
-
       console.log("Saving recipe to database:", JSON.stringify(data, null, 2));
-      const result = await GlobalApi.CreateNewRecipe(data);
-      console.log("Recipe saved successfully:", result.data);
 
-      console.log("Updating user credits:", userData);
-      const updateUser = await GlobalApi.UpdateUser(user.id, userData);
-      console.log("User updated successfully:", updateUser.data);
+      // Use RecipeService for better error handling and validation
+      const result = await RecipeService.createRecipe(data);
 
-      // Update the user context with new credits
-      if (updateUser.data?.data && user) {
-        setUser({
-          ...user,
-          credits: (user.credits || 0) - 1,
-        });
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create recipe");
       }
 
-      return result.data.data;
+      console.log("Recipe saved successfully:", result.data);
+      return result.data;
     } catch (error: any) {
       console.error("Error saving recipe to database:", error);
-      console.error("Error response:", error.response?.data);
-      console.error("Error status:", error.response?.status);
+
+      // Show user-friendly error message
+      const errorMessage = error.message || "Unknown error occurred";
       Alert.alert(
-        "Error",
-        `Failed to save recipe to database: ${error.message || "Unknown error"}`
+        "Recipe Save Error",
+        `Failed to save recipe: ${errorMessage}`
       );
       throw error;
     }

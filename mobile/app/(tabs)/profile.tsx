@@ -69,6 +69,13 @@ const Profile = () => {
     fetchUserStats();
   }, [user?.emailAddresses[0]?.emailAddress]);
 
+  // Refresh user stats when tab comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserStats();
+    }, [user?.emailAddresses[0]?.emailAddress])
+  );
+
   // Function to start entrance animations
   const startEntranceAnimations = () => {
     // Reset animation values
@@ -346,6 +353,7 @@ const Profile = () => {
                 )}
                 <Text style={styles.statLabel}>Saved</Text>
               </View>
+              <View style={styles.statDivider} />
             </View>
           </View>
         </View>

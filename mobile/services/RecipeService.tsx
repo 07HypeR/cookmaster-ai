@@ -226,8 +226,49 @@ class RecipeService {
     recipeData: any
   ): Promise<{ success: boolean; data?: Recipe; error?: string }> {
     try {
-      const result = await GlobalApi.CreateNewRecipe(recipeData);
-      console.log("Recipe created:", result.data.data);
+      // Validate required fields
+      const requiredFields = [
+        "recipeName",
+        "description",
+        "ingredients",
+        "steps",
+        "calories",
+        "cookTime",
+        "serveTo",
+        "imagePrompt",
+        "category",
+        "recipeImage",
+        "userEmail",
+      ];
+
+      const missingFields = requiredFields.filter(
+        (field) => !recipeData[field]
+      );
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      }
+
+      // Ensure ingredients and steps are properly formatted
+      const formattedData = {
+        ...recipeData,
+        ingredients: Array.isArray(recipeData.ingredients)
+          ? recipeData.ingredients
+          : JSON.parse(recipeData.ingredients || "[]"),
+        steps: Array.isArray(recipeData.steps)
+          ? recipeData.steps
+          : JSON.parse(recipeData.steps || "[]"),
+        calories: parseInt(recipeData.calories) || 0,
+        cookTime: parseInt(recipeData.cookTime) || 0,
+        serveTo: parseInt(recipeData.serveTo) || 1,
+      };
+
+      console.log(
+        "Creating recipe with data:",
+        JSON.stringify(formattedData, null, 2)
+      );
+
+      const result = await GlobalApi.CreateNewRecipe(formattedData);
+      console.log("Recipe created successfully:", result.data.data);
 
       return {
         success: true,
@@ -235,10 +276,29 @@ class RecipeService {
       };
     } catch (error: any) {
       console.error("Error creating recipe:", error);
+
+      // Handle specific error types
+      if (error.response?.status === 400) {
+        return {
+          success: false,
+          error: error.response?.data?.error?.message || "Invalid recipe data",
+        };
+      } else if (error.response?.status === 500) {
+        return {
+          success: false,
+          error: "Server error. Please try again later.",
+        };
+      } else if (error.message?.includes("Missing required fields")) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
       return {
         success: false,
         error:
-          error.response?.data?.error?.message || "Failed to create recipe",
+          "Failed to create recipe. Please check your connection and try again.",
       };
     }
   }
