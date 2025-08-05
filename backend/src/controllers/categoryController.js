@@ -3,9 +3,16 @@ import pool from "../config/database.js";
 // Get all categories
 const getAllCategories = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM categories ORDER BY name ASC"
-    );
+    // Get categories with recipe counts using a LEFT JOIN
+    const result = await pool.query(`
+      SELECT 
+        c.*,
+        COALESCE(COUNT(r.id), 0) as recipe_count
+      FROM categories c
+      LEFT JOIN recipes r ON c.name = r.category
+      GROUP BY c.id, c.name, c.icon, c.color, c.image, c.created_at
+      ORDER BY c.name ASC
+    `);
 
     res.json({
       data: result.rows,
