@@ -116,17 +116,44 @@ const CreateNewRecipe = async (data: any) => {
   console.log("API call to create recipe:", JSON.stringify(data, null, 2));
 
   try {
-    return await axiosClient.post("/recipes", data);
+    // Validate data before sending
+    if (!data.recipeName || !data.userEmail) {
+      throw new Error("Recipe name and user email are required");
+    }
+
+    const response = await axiosClient.post("/recipes", data);
+    console.log("Recipe creation successful:", response.data);
+    return response;
   } catch (error: any) {
     console.error(
       "CreateNewRecipe API error:",
       error.response?.data || error.message
     );
     console.error("Error status:", error.response?.status);
-    console.error("Error headers:", error.response?.headers);
+
+    // Provide more specific error messages
+    if (error.response?.status === 400) {
+      const errorMessage =
+        error.response?.data?.error?.message || "Invalid recipe data";
+      console.error("Validation error:", errorMessage);
+      throw new Error(errorMessage);
+    } else if (error.response?.status === 500) {
+      console.error("Server error - this might be due to deployment issues");
+      throw new Error(
+        "Server error. Please try again later or contact support."
+      );
+    } else if (
+      error.code === "NETWORK_ERROR" ||
+      error.code === "ECONNABORTED"
+    ) {
+      console.error("Network error");
+      throw new Error(
+        "Network error. Please check your connection and try again."
+      );
+    }
+
     console.error("Request URL:", error.config?.url);
     console.error("Request method:", error.config?.method);
-    console.error("Request headers:", error.config?.headers);
     console.error(
       "Full error response:",
       JSON.stringify(error.response, null, 2)
