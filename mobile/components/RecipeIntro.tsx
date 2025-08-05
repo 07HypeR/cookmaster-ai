@@ -4,18 +4,38 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
+  Animated,
+  ActivityIndicator,
 } from "react-native";
-import React, { useContext, useEffect } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import Colors from "@/shared/Colors";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { UserContext } from "@/context/UserContext";
 import { useSavedRecipesStore } from "@/services/useSavedRecipesStore";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 
 const RecipeIntro = ({ recipe }: any) => {
   const { user } = useContext(UserContext);
-  const { fetchSavedRecipes, isRecipeSaved, saveRecipe, removeRecipe } =
+  const { fetchSavedRecipes, saveRecipe, removeRecipe, savedRecipes } =
     useSavedRecipesStore();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isMounted, setIsMounted] = useState(true);
+
+  // Animation values
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const messageAnim = useRef(new Animated.Value(0)).current;
+  const isAnimating = useRef(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -23,24 +43,109 @@ const RecipeIntro = ({ recipe }: any) => {
     }
   }, [user, fetchSavedRecipes]);
 
-  const saved = isRecipeSaved(recipe?.id?.toString() || recipe?.documentId);
+  // Component mount/unmount tracking
+  useEffect(() => {
+    setIsMounted(true);
+    return () => {
+      setIsMounted(false);
+      scaleAnim.stopAnimation();
+      rotateAnim.stopAnimation();
+      messageAnim.stopAnimation();
+    };
+  }, [scaleAnim, rotateAnim, messageAnim]);
 
-  const handleToggleSave = async () => {
-    if (!user?.email) return;
+  // Get the current saved state directly from the store
+  // Adding savedRecipes as dependency to ensure re-render when store updates
+  const recipeId = recipe?.id?.toString() || recipe?.documentId;
+  const isSaved = recipeId ? savedRecipes.includes(recipeId) : false;
+
+  const showSuccessMessage = useCallback(
+    (text: string) => {
+      if (isAnimating.current || !isMounted) return; // Prevent multiple animations or updates on unmounted component
+
+      isAnimating.current = true;
+      setMessage(text);
+      setShowMessage(true);
+
+      // Stop any existing animation
+      messageAnim.stopAnimation();
+      messageAnim.setValue(0);
+
+      Animated.sequence([
+        Animated.timing(messageAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.delay(1500),
+        Animated.timing(messageAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShowMessage(false);
+        isAnimating.current = false;
+      });
+    },
+    [messageAnim, isMounted]
+  );
+
+  const handleToggleSave = useCallback(async () => {
+    if (!user?.email || isLoading || !recipeId || isAnimating.current) return;
 
     try {
-      const recipeId = recipe?.id?.toString() || recipe?.documentId;
-      if (saved) {
+      setIsLoading(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Animate button press
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.9,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Animate icon rotation
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        rotateAnim.setValue(0);
+      });
+
+      if (isSaved) {
         await removeRecipe(user.email, recipeId);
-        Alert.alert("Removed", "Recipe removed from your cookbook.");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        showSuccessMessage("Removed from favorites");
       } else {
         await saveRecipe(user.email, recipeId);
-        Alert.alert("Saved", "Recipe saved to your cookbook.");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        showSuccessMessage("Added to favorites");
       }
-    } catch {
-      Alert.alert("Error", "Something went wrong.");
+    } catch (error) {
+      console.error("Error toggling save:", error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showSuccessMessage("Failed to update recipe");
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [
+    user?.email,
+    isLoading,
+    recipeId,
+    isSaved,
+    removeRecipe,
+    saveRecipe,
+    showSuccessMessage,
+  ]);
 
   return (
     <View style={styles.container}>
@@ -49,18 +154,93 @@ const RecipeIntro = ({ recipe }: any) => {
           source={{ uri: recipe?.recipeImage || recipe?.recipe_image }}
           style={styles.recipeImage}
         />
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleToggleSave}
-          activeOpacity={0.8}
+        <Animated.View
+          style={[
+            styles.saveButton,
+            {
+              transform: [
+                { scale: scaleAnim },
+                {
+                  rotate: rotateAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ["0deg", "360deg"],
+                  }),
+                },
+              ],
+            },
+          ]}
         >
-          <Ionicons
-            name={saved ? "heart" : "heart-outline"}
-            size={24}
-            color={saved ? Colors.primary : Colors.text}
-          />
-        </TouchableOpacity>
+          {isSaved && (
+            <View style={styles.savedIndicator}>
+              <Ionicons name="checkmark" size={12} color={Colors.white} />
+            </View>
+          )}
+          <TouchableOpacity
+            onPress={handleToggleSave}
+            activeOpacity={0.8}
+            disabled={isLoading || isAnimating.current}
+            style={styles.saveButtonTouchable}
+            accessibilityLabel={
+              isSaved ? "Remove from favorites" : "Add to favorites"
+            }
+            accessibilityHint={
+              isSaved
+                ? "Double tap to remove this recipe from your favorites"
+                : "Double tap to save this recipe to your favorites"
+            }
+          >
+            {isLoading || isAnimating.current ? (
+              <ActivityIndicator
+                size="small"
+                color={isSaved ? Colors.white : Colors.primary}
+              />
+            ) : (
+              <LinearGradient
+                colors={
+                  isSaved
+                    ? (["#4CAF50", "#2E7D32"] as [string, string])
+                    : (["#FFFFFF", "#F5F5F5"] as [string, string])
+                }
+                style={styles.saveButtonGradient}
+              >
+                <Ionicons
+                  name={isSaved ? "bookmark" : "bookmark-outline"}
+                  size={24}
+                  color={isSaved ? Colors.white : Colors.text}
+                />
+              </LinearGradient>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
       </View>
+
+      {/* Success Message */}
+      {showMessage && (
+        <Animated.View
+          style={[
+            styles.successMessage,
+            {
+              opacity: messageAnim,
+              transform: [
+                {
+                  translateY: messageAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={["#4CAF50", "#2E7D32"] as [string, string]}
+            style={styles.successMessageGradient}
+          >
+            <Ionicons name="checkmark-circle" size={16} color={Colors.white} />
+            <Text style={styles.successMessageText}>{message}</Text>
+          </LinearGradient>
+        </Animated.View>
+      )}
 
       <View style={styles.content}>
         <Text style={styles.recipeName}>
@@ -146,9 +326,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.white + "E6",
-    justifyContent: "center",
-    alignItems: "center",
     shadowColor: Colors.shadow,
     shadowOffset: {
       width: 0,
@@ -159,6 +336,64 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  saveButtonTouchable: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  saveButtonGradient: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  savedIndicator: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.success,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: Colors.white,
+    zIndex: 1,
+  },
+  successMessage: {
+    position: "absolute",
+    top: 185,
+    left: 20,
+    right: 20,
+    zIndex: 10,
+  },
+  successMessageGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    gap: 8,
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  successMessageText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontFamily: "outfit",
+    fontWeight: "600",
   },
   content: {
     padding: 20,

@@ -353,7 +353,6 @@ const Profile = () => {
                 )}
                 <Text style={styles.statLabel}>Saved</Text>
               </View>
-              <View style={styles.statDivider} />
             </View>
           </View>
         </View>
