@@ -1,6 +1,5 @@
 import express from "express";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import userRoutes from "./routes/userRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
@@ -16,19 +15,6 @@ if (process.env.NODE_ENV === "production") job.start();
 
 // Security middleware
 app.use(helmet());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: {
-      message: "Too many requests from this IP, please try again later.",
-      status: 429,
-    },
-  },
-});
-app.use(limiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
