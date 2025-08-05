@@ -11,7 +11,7 @@ const validateRecipe = (req, res, next) => {
     serveTo: Joi.number().integer().min(1),
     imagePrompt: Joi.string().max(1000),
     category: Joi.string().max(100),
-    recipeImage: Joi.string().uri(),
+    recipeImage: Joi.string().optional(),
     userEmail: Joi.string().email().required(),
   });
 

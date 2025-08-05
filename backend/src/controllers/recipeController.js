@@ -17,6 +17,7 @@ const createRecipe = async (req, res) => {
       userEmail,
     } = req.body;
 
+    // Create the recipe
     const result = await pool.query(
       `INSERT INTO recipes (
         recipe_name, description, ingredients, steps, calories, 
