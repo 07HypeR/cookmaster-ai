@@ -7,6 +7,7 @@ export interface Category {
   color?: string;
   image?: string;
   created_at: string;
+  recipe_count?: number;
 }
 
 export interface CategoryResponse {

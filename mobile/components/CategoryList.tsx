@@ -181,7 +181,7 @@ const CategoryList = () => {
                     </View>
                     <Text style={styles.categoryName}>{item?.name}</Text>
                     <Text style={styles.categoryCount}>
-                      {item?.recipeCount || "0"} recipes
+                      {item?.recipe_count || "0"} recipes
                     </Text>
                   </View>
                 </TouchableOpacity>
