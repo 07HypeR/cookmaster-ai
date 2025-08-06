@@ -31,7 +31,7 @@ const CreateRecipe = ({
   shortHint = false,
 }: CreateRecipeProps) => {
   const { user, isVegMode, setUser } = useContext(UserContext);
-  const [userInput, setUserInput] = useState<string>();
+  const [userInput, setUserInput] = useState<string>("");
   const [recipeOptions, setRecipeOptions] = useState<any | null>([]);
   const [loading, setLoading] = useState(false);
   const actionSheetRef = useRef<ActionSheetRef>(null);
@@ -41,33 +41,162 @@ const CreateRecipe = ({
   const [isGeneratingFullRecipe, setIsGeneratingFullRecipe] = useState(false);
   const router = useRouter();
 
+  // Non-vegetarian items list for validation
+  const nonVegItems = [
+    "chicken",
+    "beef",
+    "pork",
+    "lamb",
+    "mutton",
+    "fish",
+    "shrimp",
+    "prawn",
+    "crab",
+    "lobster",
+    "duck",
+    "turkey",
+    "bacon",
+    "ham",
+    "sausage",
+    "pepperoni",
+    "salmon",
+    "tuna",
+    "cod",
+    "sardine",
+    "anchovy",
+    "oyster",
+    "mussel",
+    "clam",
+    "squid",
+    "octopus",
+    "meat",
+    "seafood",
+    "poultry",
+    "egg",
+    "eggs",
+  ];
+
+  // Check for non-veg items in user input
+  const checkNonVegItems = (
+    input: string
+  ): { hasNonVeg: boolean; items: string[] } => {
+    const lowerInput = input.toLowerCase();
+    const foundItems = nonVegItems.filter((item) =>
+      lowerInput.includes(item.toLowerCase())
+    );
+    return {
+      hasNonVeg: foundItems.length > 0,
+      items: foundItems,
+    };
+  };
+
+  // Generate comprehensive prompt based on available inputs
+  const generatePrompt = (): string => {
+    let promptParts: string[] = [];
+
+    // Add user input if available
+    if (userInput && userInput.trim()) {
+      promptParts.push(`User Request: ${userInput.trim()}`);
+    }
+
+    // Add selected category if available
+    if (selectedCategory) {
+      promptParts.push(`Category: ${selectedCategory}`);
+    }
+
+    // Add quick action if available
+    if (selectedQuickAction) {
+      promptParts.push(`Quick Action: ${selectedQuickAction}`);
+    }
+
+    // Add dietary preference
+    if (isVegMode) {
+      promptParts.push(
+        "Dietary Preference: Vegetarian (strictly no meat, fish, poultry, eggs, or any non-vegetarian ingredients)"
+      );
+    } else {
+      promptParts.push("Dietary Preference: No restrictions");
+    }
+
+    // Combine all parts
+    const combinedPrompt = promptParts.join(". ");
+
+    return combinedPrompt + " " + Prompt.GENERATE_RECIPE_OPTION_PROMPT;
+  };
+
   const OnGenerate = async () => {
     if (isGenerating) return;
-    if (!userInput) {
-      Alert.alert("Please enter details");
+
+    // Check if we have any input (user input, category, or quick action)
+    if (!userInput?.trim() && !selectedCategory && !selectedQuickAction) {
+      Alert.alert(
+        "Input Required",
+        "Please enter recipe details, select a category, or choose a quick action to generate recipes."
+      );
       return;
+    }
+
+    // Check for non-veg items when in veg mode
+    if (isVegMode && userInput?.trim()) {
+      const nonVegCheck = checkNonVegItems(userInput);
+      if (nonVegCheck.hasNonVeg) {
+        const itemText = nonVegCheck.items.length === 1 ? "item" : "items";
+        const itemsList = nonVegCheck.items.join(", ");
+        Alert.alert(
+          "Vegetarian Mode Active",
+          `You're in vegetarian mode, but your request includes non-vegetarian ${itemText}: ${itemsList}. Please remove these ${itemText} or switch to non-vegetarian mode.`
+        );
+        return;
+      }
     }
 
     setIsGenerating(true);
     setLoading(true);
 
     try {
-      const result = await GlobalApi.AiModel(
-        userInput + Prompt.GENERATE_RECIPE_OPTION_PROMPT
-      );
+      const prompt = generatePrompt();
+      console.log("Generated prompt:", prompt);
+
+      const result = await GlobalApi.AiModel(prompt);
       const extractJson =
         result.data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
       const jsonMatch = extractJson.match(/```json\n([\s\S]*?)\n```/);
       if (!jsonMatch) {
-        throw new Error("Ai response dose not contain JSON");
+        throw new Error("AI response does not contain JSON");
       }
       const jsonString = jsonMatch[1];
       const parsedJsonResp = JSON.parse(jsonString || "{}");
-      console.log(parsedJsonResp);
-      setRecipeOptions(parsedJsonResp);
+      console.log("AI Response:", parsedJsonResp);
+
+      // Validate that generated recipes are vegetarian if in veg mode
+      if (isVegMode && Array.isArray(parsedJsonResp)) {
+        const filteredRecipes = parsedJsonResp.filter((recipe) => {
+          const recipeText = `${recipe.recipeName} ${
+            recipe.description
+          } ${JSON.stringify(recipe)}`.toLowerCase();
+          return !nonVegItems.some((item) =>
+            recipeText.includes(item.toLowerCase())
+          );
+        });
+
+        if (filteredRecipes.length === 0) {
+          throw new Error(
+            "No suitable vegetarian recipes found. Please try different ingredients or keywords."
+          );
+        }
+
+        setRecipeOptions(filteredRecipes);
+      } else {
+        setRecipeOptions(parsedJsonResp);
+      }
+
       actionSheetRef.current?.show();
     } catch (error) {
       console.error("Error generating options", error);
+      Alert.alert(
+        "Generation Error",
+        "Failed to generate recipe options. Please try again with different inputs."
+      );
     } finally {
       setLoading(false);
       setIsGenerating(false);
@@ -82,32 +211,58 @@ const CreateRecipe = ({
     setLoadingMessage("Generating complete recipe...");
     setOpenLoading(true);
     setIsGeneratingFullRecipe(true);
-    console.log(
-      "Loading states set - openLoading: true, isGeneratingFullRecipe: true"
-    );
 
     // Small delay to ensure loading dialog shows up
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     try {
-      const PROMPT =
-        "RecipeName: " +
-        option.recipeName +
-        "Description: " +
-        option?.description +
-        Prompt.GENERATE_COMPLETE_RECIPE_PROMPT;
+      let completePrompt = `RecipeName: ${option.recipeName}. Description: ${option?.description}`;
 
-      const result = await GlobalApi.AiModel(PROMPT);
+      // Add dietary restrictions to complete recipe prompt
+      if (isVegMode) {
+        completePrompt +=
+          ". IMPORTANT: This must be a completely vegetarian recipe with no meat, fish, poultry, eggs, or any non-vegetarian ingredients whatsoever.";
+      }
+
+      // Add context from original selections
+      if (selectedCategory) {
+        completePrompt += `. Category Context: ${selectedCategory}`;
+      }
+      if (selectedQuickAction) {
+        completePrompt += `. Quick Action Context: ${selectedQuickAction}`;
+      }
+      if (userInput?.trim()) {
+        completePrompt += `. User Requirements: ${userInput.trim()}`;
+      }
+
+      completePrompt += " " + Prompt.GENERATE_COMPLETE_RECIPE_PROMPT;
+
+      const result = await GlobalApi.AiModel(completePrompt);
 
       const extractJson =
         result.data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
       const jsonMatch = extractJson.match(/```json\n([\s\S]*?)\n```/);
       if (!jsonMatch) {
-        throw new Error("Ai response dose not contain JSON");
+        throw new Error("AI response does not contain JSON");
       }
       const jsonString = jsonMatch[1];
       const parsedJsonResp = JSON.parse(jsonString || "{}");
-      console.log(parsedJsonResp);
+
+      // Final validation for vegetarian mode
+      if (isVegMode) {
+        const recipeContent = JSON.stringify(parsedJsonResp).toLowerCase();
+        const hasNonVegContent = nonVegItems.some((item) =>
+          recipeContent.includes(item.toLowerCase())
+        );
+
+        if (hasNonVegContent) {
+          throw new Error(
+            "Generated recipe contains non-vegetarian ingredients. Please try again."
+          );
+        }
+      }
+
+      console.log("Complete recipe generated:", parsedJsonResp);
 
       setLoadingMessage("Generating recipe image...");
       console.log("Generating recipe image...");
@@ -142,8 +297,15 @@ const CreateRecipe = ({
 
   const GenerateRecipeAiImage = async (imagePrompt: string) => {
     try {
+      // Add vegetarian context to image prompt if in veg mode
+      let finalImagePrompt = imagePrompt;
+      if (isVegMode) {
+        finalImagePrompt +=
+          " (vegetarian food only, no meat or non-vegetarian ingredients visible)";
+      }
+
       const response = await GlobalApi.RecipeImageApi.post("/image/generate", {
-        prompt: imagePrompt,
+        prompt: finalImagePrompt,
       });
       console.log("Image generated successfully:", response.data.imageUrl);
       return response.data.imageUrl;
@@ -210,6 +372,14 @@ const CreateRecipe = ({
     );
   }, [openLoading, loadingMessage]);
 
+  // Get context display text
+  const getContextDisplay = () => {
+    const contexts = [];
+    if (selectedCategory) contexts.push(`Category: ${selectedCategory}`);
+    if (selectedQuickAction) contexts.push(`Action: ${selectedQuickAction}`);
+    return contexts.length > 0 ? contexts.join(" • ") : null;
+  };
+
   return (
     <View style={styles.container}>
       {/* Header Section */}
@@ -227,7 +397,23 @@ const CreateRecipe = ({
           Describe what you want to cook and let AI create amazing recipes for
           you
         </Text>
+
+        {/* Vegetarian Mode Indicator */}
+        {isVegMode && (
+          <View style={styles.vegModeIndicator}>
+            <Ionicons name="leaf" size={16} color="#4CAF50" />
+            <Text style={styles.vegModeText}>Vegetarian Mode Active</Text>
+          </View>
+        )}
       </View>
+
+      {/* Context Display */}
+      {getContextDisplay() && (
+        <View style={styles.contextSection}>
+          <Text style={styles.contextLabel}>Selected Options:</Text>
+          <Text style={styles.contextText}>{getContextDisplay()}</Text>
+        </View>
+      )}
 
       {/* Input Section */}
       <View style={styles.inputSection}>
@@ -236,8 +422,13 @@ const CreateRecipe = ({
             style={styles.textInput}
             multiline={true}
             numberOfLines={4}
+            value={userInput}
             onChangeText={(value) => setUserInput(value)}
-            placeholder="What would you like to cook? Include ingredients, cuisine type, or preferences..."
+            placeholder={`What would you like to cook? ${
+              isVegMode
+                ? "Include vegetarian ingredients, cuisine type, or preferences..."
+                : "Include ingredients, cuisine type, or preferences..."
+            }`}
             placeholderTextColor={Colors.textLight}
             textAlignVertical="top"
           />
@@ -246,7 +437,7 @@ const CreateRecipe = ({
             <Text style={styles.inputHint}>
               {shortHint
                 ? "Be specific for better results."
-                : "Be specific for better results. You can also just select a category or quick action or combine, or combine all three for the best results."}
+                : "Be specific for better results. You can combine text input with category and quick action selections for optimal results."}
             </Text>
           </View>
         </View>
@@ -301,6 +492,7 @@ const CreateRecipe = ({
               <Text style={styles.actionSheetTitle}>Choose Your Recipe</Text>
               <Text style={styles.actionSheetSubtitle}>
                 Select the recipe you'd like to create
+                {isVegMode && " • Vegetarian recipes only"}
               </Text>
             </View>
           </View>
@@ -315,9 +507,14 @@ const CreateRecipe = ({
                   activeOpacity={0.8}
                 >
                   <View style={styles.recipeOptionContent}>
-                    <Text style={styles.recipeOptionTitle}>
-                      {item?.recipeName || item?.title || "Unnamed Recipe"}
-                    </Text>
+                    <View style={styles.recipeOptionHeader}>
+                      <Text style={styles.recipeOptionTitle}>
+                        {item?.recipeName || item?.title || "Unnamed Recipe"}
+                      </Text>
+                      {isVegMode && (
+                        <Ionicons name="leaf" size={16} color="#4CAF50" />
+                      )}
+                    </View>
                     <Text style={styles.recipeOptionDescription}>
                       {item?.description || "No description available"}
                     </Text>
@@ -372,7 +569,7 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: "center",
-    marginBottom: 28,
+    marginBottom: 20,
   },
   iconContainer: {
     shadowColor: Colors.primary,
@@ -403,6 +600,42 @@ const styles = StyleSheet.create({
     fontFamily: "outfit",
     textAlign: "center",
     lineHeight: 22,
+  },
+  vegModeIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E8F5E8",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 12,
+    gap: 6,
+  },
+  vegModeText: {
+    fontSize: 13,
+    color: "#4CAF50",
+    fontFamily: "outfit",
+    fontWeight: "500",
+  },
+  contextSection: {
+    backgroundColor: Colors.grayLight,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  contextLabel: {
+    fontSize: 13,
+    color: Colors.textLight,
+    fontFamily: "outfit",
+    marginBottom: 4,
+  },
+  contextText: {
+    fontSize: 14,
+    color: Colors.text,
+    fontFamily: "outfit",
+    fontWeight: "500",
   },
   inputSection: {
     marginBottom: 24,
@@ -535,12 +768,18 @@ const styles = StyleSheet.create({
   recipeOptionContent: {
     flex: 1,
   },
+  recipeOptionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
   recipeOptionTitle: {
     fontSize: 17,
     fontWeight: "600",
     color: Colors.text,
     fontFamily: "outfit-bold",
-    marginBottom: 6,
+    flex: 1,
   },
   recipeOptionDescription: {
     fontSize: 14,
