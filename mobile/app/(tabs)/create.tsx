@@ -7,11 +7,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  Animated,
   StatusBar,
 } from "react-native";
-import React, { useState, useRef, useEffect } from "react";
-import { useFocusEffect } from "expo-router";
+import React, { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/shared/Colors";
 import CreateRecipe from "@/components/CreateRecipe";
@@ -19,18 +17,13 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const Create = () => {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState("ai");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedQuickAction, setSelectedQuickAction] = useState("");
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   const tabs = [
     {
@@ -127,45 +120,6 @@ const Create = () => {
     },
   ];
 
-  // Function to start entrance animations
-  const startEntranceAnimations = () => {
-    // Reset animation values
-    fadeAnim.setValue(0);
-    slideAnim.setValue(50);
-    scaleAnim.setValue(0.9);
-
-    // Start animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  // Start entrance animations when component mounts
-  useEffect(() => {
-    startEntranceAnimations();
-  }, []);
-
-  // Restart animations when tab comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      startEntranceAnimations();
-    }, [])
-  );
-
   const handleTabPress = (tabId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setActiveTab(tabId);
@@ -195,20 +149,12 @@ const Create = () => {
     <KeyboardAvoidingView
       style={[styles.container, { paddingTop: insets.top }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       {/* Header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerIconContainer}>
             <LinearGradient
@@ -225,18 +171,10 @@ const Create = () => {
             </Text>
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Tab Navigation */}
-      <Animated.View
-        style={[
-          styles.tabContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.tabContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
@@ -265,7 +203,7 @@ const Create = () => {
             </Text>
           </TouchableOpacity>
         ))}
-      </Animated.View>
+      </View>
 
       {/* Content */}
       <ScrollView
@@ -274,15 +212,7 @@ const Create = () => {
         contentContainerStyle={styles.contentContainer}
       >
         {activeTab === "ai" ? (
-          <Animated.View
-            style={[
-              styles.aiContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-              },
-            ]}
-          >
+          <View style={styles.aiContainer}>
             {/* AI Recipe Generator - Moved to Top */}
             <View style={styles.aiGeneratorContainer}>
               <View style={styles.sectionHeader}>
@@ -302,43 +232,29 @@ const Create = () => {
                 <Text style={styles.sectionTitle}>Choose a Category</Text>
               </View>
               <View style={styles.categoriesGrid}>
-                {categories.map((category, index) => (
-                  <Animated.View
+                {categories.map((category) => (
+                  <TouchableOpacity
                     key={category.id}
-                    style={{
-                      opacity: fadeAnim,
-                      transform: [
-                        {
-                          translateY: slideAnim.interpolate({
-                            inputRange: [0, 50],
-                            outputRange: [0, 20 + index * 10],
-                          }),
-                        },
-                      ],
-                    }}
+                    style={[
+                      styles.categoryCard,
+                      selectedCategory === category.id &&
+                        styles.selectedCategory,
+                    ]}
+                    onPress={() => handleCategoryPress(category)}
+                    activeOpacity={0.8}
                   >
-                    <TouchableOpacity
-                      style={[
-                        styles.categoryCard,
-                        selectedCategory === category.id &&
-                          styles.selectedCategory,
-                      ]}
-                      onPress={() => handleCategoryPress(category)}
-                      activeOpacity={0.8}
+                    <LinearGradient
+                      colors={category.gradient as [string, string]}
+                      style={styles.categoryIconGradient}
                     >
-                      <LinearGradient
-                        colors={category.gradient as [string, string]}
-                        style={styles.categoryIconGradient}
-                      >
-                        <Ionicons
-                          name={category.icon as any}
-                          size={24}
-                          color="white"
-                        />
-                      </LinearGradient>
-                      <Text style={styles.categoryName}>{category.name}</Text>
-                    </TouchableOpacity>
-                  </Animated.View>
+                      <Ionicons
+                        name={category.icon as any}
+                        size={24}
+                        color="white"
+                      />
+                    </LinearGradient>
+                    <Text style={styles.categoryName}>{category.name}</Text>
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>
@@ -350,50 +266,36 @@ const Create = () => {
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
               </View>
               <View style={styles.quickActionsGrid}>
-                {quickActions.map((action, index) => (
-                  <Animated.View
+                {quickActions.map((action) => (
+                  <TouchableOpacity
                     key={action.id}
-                    style={{
-                      opacity: fadeAnim,
-                      transform: [
-                        {
-                          translateY: slideAnim.interpolate({
-                            inputRange: [0, 50],
-                            outputRange: [0, 15 + index * 8],
-                          }),
-                        },
-                      ],
-                    }}
+                    style={[
+                      styles.quickActionCard,
+                      selectedQuickAction === action.prompt &&
+                        styles.selectedQuickAction,
+                    ]}
+                    onPress={() => handleQuickActionPress(action)}
+                    activeOpacity={0.8}
                   >
-                    <TouchableOpacity
-                      style={[
-                        styles.quickActionCard,
-                        selectedQuickAction === action.prompt &&
-                          styles.selectedQuickAction,
-                      ]}
-                      onPress={() => handleQuickActionPress(action)}
-                      activeOpacity={0.8}
+                    <LinearGradient
+                      colors={action.gradient as [string, string]}
+                      style={styles.quickActionIconGradient}
                     >
-                      <LinearGradient
-                        colors={action.gradient as [string, string]}
-                        style={styles.quickActionIconGradient}
-                      >
-                        <Ionicons
-                          name={action.icon as any}
-                          size={20}
-                          color="white"
-                        />
-                      </LinearGradient>
-                      <View style={styles.quickActionContent}>
-                        <Text style={styles.quickActionTitle}>
-                          {action.title}
-                        </Text>
-                        <Text style={styles.quickActionSubtitle}>
-                          {action.subtitle}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </Animated.View>
+                      <Ionicons
+                        name={action.icon as any}
+                        size={20}
+                        color="white"
+                      />
+                    </LinearGradient>
+                    <View style={styles.quickActionContent}>
+                      <Text style={styles.quickActionTitle}>
+                        {action.title}
+                      </Text>
+                      <Text style={styles.quickActionSubtitle}>
+                        {action.subtitle}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>
@@ -413,47 +315,37 @@ const Create = () => {
                 </Text>
               </View>
             </View>
-          </Animated.View>
+          </View>
         ) : (
-          <Animated.View
-            style={[
-              styles.manualContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-              },
-            ]}
-          >
-            <View style={styles.comingSoonContainer}>
+          <View style={styles.manualContainer}>
+            <LinearGradient
+              colors={["#FF9800", "#F57C00"]}
+              style={styles.comingSoonIconGradient}
+            >
+              <Ionicons name="construct" size={60} color={Colors.white} />
+            </LinearGradient>
+            <Text style={styles.comingSoonTitle}>Coming Soon!</Text>
+            <Text style={styles.comingSoonText}>
+              Manual recipe creation will be available in the next update. For
+              now, use our AI-powered recipe generator to create amazing recipes
+              instantly!
+            </Text>
+            <TouchableOpacity
+              style={styles.switchToAiButton}
+              onPress={() => handleTabPress("ai")}
+              activeOpacity={0.8}
+            >
               <LinearGradient
-                colors={["#FF9800", "#F57C00"]}
-                style={styles.comingSoonIconGradient}
+                colors={["#4CAF50", "#2E7D32"]}
+                style={styles.switchToAiGradient}
               >
-                <Ionicons name="construct" size={60} color={Colors.white} />
+                <Ionicons name="sparkles" size={20} color={Colors.white} />
+                <Text style={styles.switchToAiText}>
+                  Try AI Recipe Generator
+                </Text>
               </LinearGradient>
-              <Text style={styles.comingSoonTitle}>Coming Soon!</Text>
-              <Text style={styles.comingSoonText}>
-                Manual recipe creation will be available in the next update. For
-                now, use our AI-powered recipe generator to create amazing
-                recipes instantly!
-              </Text>
-              <TouchableOpacity
-                style={styles.switchToAiButton}
-                onPress={() => handleTabPress("ai")}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={["#4CAF50", "#2E7D32"]}
-                  style={styles.switchToAiGradient}
-                >
-                  <Ionicons name="sparkles" size={20} color={Colors.white} />
-                  <Text style={styles.switchToAiText}>
-                    Try AI Recipe Generator
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -532,7 +424,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   activeTab: {
-    borderColor: "transparent",
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

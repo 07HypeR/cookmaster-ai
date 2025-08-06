@@ -6,12 +6,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
   StatusBar,
-  Animated,
   StyleSheet,
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import RecipeIntro from "@/components/RecipeIntro";
 import Colors from "@/shared/Colors";
@@ -20,7 +18,6 @@ import RecipeSteps from "@/components/RecipeSteps";
 import CreateRecipe from "@/components/CreateRecipe";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import RecipeService from "@/services/RecipeService";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
@@ -45,35 +42,20 @@ interface Recipe {
 const RecipeDetail = () => {
   const { recipeId, recipeData, source, categoryName } = useLocalSearchParams();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        // If recipeId is provided, fetch from database
         if (recipeId) {
           const result = await RecipeService.getRecipeById(recipeId as string);
-          if (result.data) {
-            setRecipe(result.data);
-          } else if (result.error) {
-            setError(result.error);
-          }
-        }
-        // If recipeData is provided (fallback for existing functionality)
-        else if (recipeData) {
-          const parsedRecipe = JSON.parse(recipeData as string);
-          setRecipe(parsedRecipe);
+          result.data ? setRecipe(result.data) : setError(result.error || null);
+        } else if (recipeData) {
+          setRecipe(JSON.parse(recipeData as string));
         } else {
           setError("No recipe ID or data provided");
         }
@@ -84,47 +66,19 @@ const RecipeDetail = () => {
         setLoading(false);
       }
     };
-
     fetchRecipe();
   }, [recipeId, recipeData]);
-
-  // Start entrance animations when component mounts
-  useEffect(() => {
-    if (!loading && !error) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [loading, error]);
 
   const handleBackPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (source === "category" && categoryName) {
       router.push({
         pathname: "/recipe-by-category",
-        params: {
-          categoryName: categoryName as string,
-        },
+        params: { categoryName: categoryName as string },
       });
     } else if (source === "explore") {
       router.push("/(tabs)/explore");
-    } else if (source === "myRecipes") {
-      router.push("/(tabs)/cookbook");
-    } else if (source === "savedRecipes") {
+    } else if (source === "myRecipes" || source === "savedRecipes") {
       router.push("/(tabs)/cookbook");
     } else {
       router.back();
@@ -150,7 +104,7 @@ const RecipeDetail = () => {
 
   if (error || !recipe) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={styles.loadingContainer}>
         <StatusBar
           barStyle="dark-content"
           backgroundColor={Colors.background}
@@ -159,7 +113,7 @@ const RecipeDetail = () => {
           <View style={styles.errorCard}>
             <View style={styles.errorIconContainer}>
               <LinearGradient
-                colors={["#FF6B6B", "#FF5252"] as [string, string]}
+                colors={["#FF6B6B", "#FF5252"]}
                 style={styles.errorIconGradient}
               >
                 <Ionicons name="alert-circle" size={32} color={Colors.white} />
@@ -172,10 +126,9 @@ const RecipeDetail = () => {
             <TouchableOpacity
               style={styles.errorButton}
               onPress={handleBackPress}
-              activeOpacity={0.8}
             >
               <LinearGradient
-                colors={["#4CAF50", "#2E7D32"] as [string, string]}
+                colors={["#4CAF50", "#2E7D32"]}
                 style={styles.errorButtonGradient}
               >
                 <Ionicons name="arrow-back" size={20} color={Colors.white} />
@@ -192,35 +145,25 @@ const RecipeDetail = () => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       <FlatList
         data={[]}
-        renderItem={() => null}
+        renderItem={null}
         showsVerticalScrollIndicator={false}
-        style={styles.flatList}
         contentContainerStyle={styles.flatListContent}
         ListHeaderComponent={
-          <Animated.View
-            style={[
-              styles.content,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-              },
-            ]}
-          >
-            {/* Header Section */}
+          <View style={styles.content}>
+            {/* Header */}
             <View style={styles.headerSection}>
               <View style={styles.headerContent}>
                 <TouchableOpacity
                   style={styles.backButton}
                   onPress={handleBackPress}
-                  activeOpacity={0.6}
                 >
                   <LinearGradient
-                    colors={["#4CAF50", "#2E7D32"] as [string, string]}
+                    colors={["#4CAF50", "#2E7D32"]}
                     style={styles.backButtonGradient}
                   >
                     <Ionicons
@@ -247,19 +190,19 @@ const RecipeDetail = () => {
               </View>
             </View>
 
-            {/* Recipe Content */}
+            {/* Recipe Details */}
             <View style={styles.recipeContent}>
               <RecipeIntro recipe={recipe} />
               <Ingredient ingredients={recipe?.ingredients} />
               <RecipeSteps steps={recipe.steps} />
             </View>
 
-            {/* Create Recipe Section */}
+            {/* Create Prompt */}
             <View style={styles.createSection}>
               <View style={styles.createCard}>
                 <View style={styles.createIconContainer}>
                   <LinearGradient
-                    colors={["#FF6B6B", "#FF5252"] as [string, string]}
+                    colors={["#FF6B6B", "#FF5252"]}
                     style={styles.createIconGradient}
                   >
                     <Ionicons name="add" size={24} color={Colors.white} />
@@ -272,9 +215,9 @@ const RecipeDetail = () => {
                   </Text>
                 </View>
               </View>
-              <CreateRecipe />
+              <CreateRecipe shortHint={true} />
             </View>
-          </Animated.View>
+          </View>
         }
       />
     </KeyboardAvoidingView>

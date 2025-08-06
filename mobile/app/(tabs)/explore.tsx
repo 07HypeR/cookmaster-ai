@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
-  Animated,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useFocusEffect } from "expo-router";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -20,6 +20,7 @@ import GlobalApi from "@/services/GlobalApi";
 import RecipeCard from "@/components/RecipeCard";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 
 interface Recipe {
   id?: number;
@@ -49,14 +50,13 @@ const Explore = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [showFilters, setShowFilters] = useState(false);
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-  const filterAnim = useRef(new Animated.Value(0)).current;
-  const isToggling = useRef(false);
+  // Temporary states for filter options
+  const [tempSortBy, setTempSortBy] = useState("newest");
+  const [tempCategory, setTempCategory] = useState("all");
+
+  // Reference to the action sheet
+  const filterActionSheetRef = React.useRef<ActionSheetRef>(null);
 
   const categories = [
     {
@@ -126,49 +126,11 @@ const Explore = () => {
   ];
 
   const sortOptions = [
-    { id: "newest", name: "Newest", icon: "time" },
-    { id: "popular", name: "Popular", icon: "trending-up" },
-    { id: "name", name: "Name", icon: "text" },
+    { id: "newest", name: "Newest", icon: "calendar" },
+    { id: "name", name: "Name (A to Z)", icon: "text" },
+    { id: "time", name: "Lowest Cooking Time", icon: "time" },
+    { id: "difficulty", name: "Difficulty", icon: "trending-up" },
   ];
-
-  // Function to start entrance animations
-  const startEntranceAnimations = () => {
-    // Reset animation values
-    fadeAnim.setValue(0);
-    slideAnim.setValue(30);
-    scaleAnim.setValue(0.95);
-
-    // Start animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  // Start entrance animations when component mounts
-  useEffect(() => {
-    startEntranceAnimations();
-  }, []);
-
-  // Restart animations when tab comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      startEntranceAnimations();
-    }, [])
-  );
 
   const GetAllRecipes = async (category?: string, isRefreshing = false) => {
     if (isRefreshing) {
@@ -176,7 +138,6 @@ const Explore = () => {
     } else {
       setLoading(true);
     }
-
     try {
       let result;
       if (category && category !== "all") {
@@ -184,8 +145,6 @@ const Explore = () => {
       } else {
         result = await GlobalApi.GetAllRecipeList();
       }
-
-      // Ensure we have valid data
       const recipes = result?.data?.data || [];
       setRecipeList(Array.isArray(recipes) ? recipes : []);
     } catch (error) {
@@ -198,7 +157,6 @@ const Explore = () => {
   };
 
   const filterAndSortRecipes = useCallback(() => {
-    // Ensure recipeList is an array
     if (!Array.isArray(recipeList)) {
       setFilteredRecipes([]);
       return;
@@ -206,13 +164,12 @@ const Explore = () => {
 
     let filtered = [...recipeList];
 
-    // Filter by search query
     if (searchQuery.trim()) {
       filtered = filtered.filter((recipe) => {
         if (!recipe) return false;
 
         const recipeName =
-          recipe.attributes?.recipeName || recipe.recipeName || "";
+          recipe.attributes?.recipe_name || recipe.recipe_name || "";
         const description =
           recipe.attributes?.description || recipe.description || "";
 
@@ -223,27 +180,64 @@ const Explore = () => {
       });
     }
 
-    // Sort recipes
     switch (sortBy) {
       case "name":
         filtered.sort((a, b) => {
-          const nameA = a?.attributes?.recipeName || a?.recipeName || "";
-          const nameB = b?.attributes?.recipeName || b?.recipeName || "";
+          const nameA = a?.attributes?.recipe_name || a?.recipe_name || "";
+          const nameB = b?.attributes?.recipe_name || b?.recipe_name || "";
           return nameA.localeCompare(nameB);
         });
         break;
-      case "popular":
+      case "time":
         filtered.sort((a, b) => {
-          const likesA = a?.attributes?.likes || a?.likes || 0;
-          const likesB = b?.attributes?.likes || b?.likes || 0;
-          return likesB - likesA;
+          const timeA =
+            a?.attributes?.cook_time ??
+            a?.cook_time ??
+            a?.attributes?.cooking_time ??
+            a?.cooking_time ??
+            0;
+          const timeB =
+            b?.attributes?.cook_time ??
+            b?.cook_time ??
+            b?.attributes?.cooking_time ??
+            b?.cooking_time ??
+            0;
+          return timeA - timeB;
+        });
+        break;
+      case "difficulty":
+        filtered.sort((a, b) => {
+          const stepsAData = a?.attributes?.steps ?? a?.steps ?? [];
+          const stepsBData = b?.attributes?.steps ?? b?.steps ?? [];
+
+          const stepsALen = Array.isArray(stepsAData)
+            ? stepsAData.length
+            : (() => {
+                try {
+                  return JSON.parse(stepsAData || "[]").length;
+                } catch {
+                  return 0;
+                }
+              })();
+
+          const stepsBLen = Array.isArray(stepsBData)
+            ? stepsBData.length
+            : (() => {
+                try {
+                  return JSON.parse(stepsBData || "[]").length;
+                } catch {
+                  return 0;
+                }
+              })();
+
+          return stepsBLen - stepsALen; // More steps means harder
         });
         break;
       case "newest":
       default:
         filtered.sort((a, b) => {
-          const dateA = a?.attributes?.createdAt || a?.createdAt || 0;
-          const dateB = b?.attributes?.createdAt || b?.createdAt || 0;
+          const dateA = a?.attributes?.created_at || a?.created_at || 0;
+          const dateB = b?.attributes?.created_at || b?.created_at || 0;
           return new Date(dateB).getTime() - new Date(dateA).getTime();
         });
         break;
@@ -258,11 +252,10 @@ const Explore = () => {
 
   useEffect(() => {
     filterAndSortRecipes();
-  }, [filterAndSortRecipes]);
+  }, [recipeList, searchQuery, sortBy]);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleCategoryPress = (category: string) => {
@@ -270,47 +263,26 @@ const Explore = () => {
     setSelectedCategory(category);
   };
 
-  const handleSortPress = (sort: string) => {
+  const handleTempSortPress = (sort: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSortBy(sort);
+    setTempSortBy(sort);
   };
 
   const toggleFilters = useCallback(() => {
-    if (isToggling.current) return;
-    isToggling.current = true;
+    // Initialize temporary states with current values
+    setTempSortBy(sortBy);
+    setTempCategory(selectedCategory);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (!showFilters) {
-      setShowFilters(true);
-      Animated.parallel([
-        Animated.spring(filterAnim, {
-          toValue: 1,
-          tension: 100,
-          friction: 10,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        isToggling.current = false;
-      });
-    } else {
-      Animated.parallel([
-        Animated.timing(filterAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setShowFilters(false);
-        isToggling.current = false;
-      });
-    }
-  }, [showFilters, filterAnim]);
+    filterActionSheetRef.current?.show();
+  }, [sortBy, selectedCategory]);
 
   const clearFilters = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSearchQuery("");
     setSelectedCategory("all");
     setSortBy("newest");
+    setTempCategory("all");
+    setTempSortBy("newest");
   }, []);
 
   const onRefresh = useCallback(() => {
@@ -351,19 +323,15 @@ const Explore = () => {
   const emptyState = getEmptyStateContent();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { paddingTop: insets.top }]}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       {/* Header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerContent}>
             <View style={styles.headerIconContainer}>
@@ -396,18 +364,10 @@ const Explore = () => {
             </View>
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Search Bar */}
-      <Animated.View
-        style={[
-          styles.searchContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color={Colors.textLight} />
           <TextInput
@@ -435,18 +395,10 @@ const Explore = () => {
             <Ionicons name="filter" size={20} color={Colors.white} />
           </LinearGradient>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
 
       {/* Category Pills */}
-      <Animated.View
-        style={[
-          styles.categoryContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.categoryContainer}>
         <FlatList
           data={categories}
           horizontal
@@ -501,119 +453,113 @@ const Explore = () => {
             </TouchableOpacity>
           )}
         />
-      </Animated.View>
+      </View>
 
-      {/* Filters Section */}
-      {showFilters && (
-        <Animated.View
-          style={[
-            styles.filtersContainer,
-            {
-              opacity: filterAnim,
-              transform: [
-                {
-                  scale: filterAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.95, 1],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={[Colors.card, Colors.background]}
-            style={styles.filtersGradient}
-          >
-            {/* Sort Options */}
-            <View style={styles.filterSection}>
-              <Text style={styles.filterTitle}>Sort By</Text>
-              <View style={styles.sortOptionsList}>
-                {sortOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.id}
-                    style={styles.sortChip}
-                    onPress={() => handleSortPress(option.id)}
-                    activeOpacity={0.7}
+      {/* Action Sheet for Filters */}
+      <ActionSheet
+        ref={filterActionSheetRef}
+        containerStyle={styles.actionSheetContainer}
+        indicatorStyle={styles.actionSheetIndicator}
+        gestureEnabled={true}
+        closeOnPressBack={true}
+        closeOnTouchBackdrop={true}
+        defaultOverlayOpacity={0.3}
+      >
+        <View style={styles.actionSheetContent}>
+          <View style={styles.actionSheetHeader}>
+            <Text style={styles.actionSheetTitle}>Filter Options</Text>
+            <TouchableOpacity
+              onPress={() => filterActionSheetRef.current?.hide()}
+              style={styles.actionSheetCloseButton}
+            >
+              <Ionicons name="close" size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Sort Options */}
+          <View style={styles.filterSection}>
+            <Text style={styles.filterTitle}>Sort By</Text>
+            <View style={styles.sortOptionsList}>
+              {sortOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={styles.sortChip}
+                  onPress={() => handleTempSortPress(option.id)}
+                  activeOpacity={0.7}
+                >
+                  <LinearGradient
+                    colors={
+                      tempSortBy === option.id
+                        ? (["#4CAF50", "#2E7D32"] as [string, string])
+                        : [Colors.card, Colors.card]
+                    }
+                    style={[
+                      styles.sortChipGradient,
+                      tempSortBy === option.id &&
+                        styles.selectedSortChipGradient,
+                    ]}
                   >
-                    <LinearGradient
-                      colors={
-                        sortBy === option.id
-                          ? (["#4CAF50", "#2E7D32"] as [string, string])
-                          : [Colors.card, Colors.card]
+                    <Ionicons
+                      name={option.icon as any}
+                      size={16}
+                      color={
+                        tempSortBy === option.id ? Colors.white : Colors.text
                       }
+                    />
+                    <Text
                       style={[
-                        styles.sortChipGradient,
-                        sortBy === option.id && styles.selectedSortChipGradient,
+                        styles.sortText,
+                        tempSortBy === option.id && styles.selectedSortText,
                       ]}
                     >
-                      <Ionicons
-                        name={option.icon as any}
-                        size={16}
-                        color={
-                          sortBy === option.id ? Colors.white : Colors.text
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.sortText,
-                          sortBy === option.id && styles.selectedSortText,
-                        ]}
-                      >
-                        {option.name}
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                      {option.name}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              ))}
             </View>
+          </View>
 
-            {/* Clear Filters */}
-            {(searchQuery ||
-              selectedCategory !== "all" ||
-              sortBy !== "newest") && (
-              <TouchableOpacity
-                style={styles.clearFiltersButton}
-                onPress={clearFilters}
-              >
-                <Ionicons name="refresh" size={16} color={Colors.primary} />
-                <Text style={styles.clearFiltersText}>Clear Filters</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Done Button */}
-            <TouchableOpacity style={styles.doneButton} onPress={toggleFilters}>
-              <LinearGradient
-                colors={["#4CAF50", "#2E7D32"] as [string, string]}
-                style={styles.doneButtonGradient}
-              >
-                <Text style={styles.doneButtonText}>Done</Text>
-              </LinearGradient>
+          {/* Clear Filters */}
+          {(searchQuery ||
+            tempCategory !== "all" ||
+            tempSortBy !== "newest") && (
+            <TouchableOpacity
+              style={styles.clearFiltersButton}
+              onPress={() => {
+                setTempCategory("all");
+                setTempSortBy("newest");
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              }}
+            >
+              <Ionicons name="refresh" size={16} color={Colors.primary} />
+              <Text style={styles.clearFiltersText}>Clear Filters</Text>
             </TouchableOpacity>
-          </LinearGradient>
-        </Animated.View>
-      )}
+          )}
+
+          {/* Apply Button */}
+          <TouchableOpacity
+            style={styles.applyButton}
+            onPress={() => {
+              // Apply the temporary selections
+              setSortBy(tempSortBy);
+              setSelectedCategory(tempCategory);
+              filterActionSheetRef.current?.hide();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }}
+          >
+            <LinearGradient
+              colors={["#4CAF50", "#2E7D32"] as [string, string]}
+              style={styles.applyButtonGradient}
+            >
+              <Text style={styles.applyButtonText}>Apply Filters</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </ActionSheet>
 
       {/* Content */}
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: filterAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [1, 0.5],
-            }),
-            transform: [
-              {
-                scale: filterAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 0.95],
-                }),
-              },
-            ],
-          },
-        ]}
-      >
+      <View style={styles.content}>
         <FlatList
           data={filteredRecipes}
           numColumns={2}
@@ -676,33 +622,18 @@ const Explore = () => {
               </View>
             )
           }
-          renderItem={({ item, index }) => (
-            <Animated.View
-              style={[
-                styles.recipeCardContainer,
-                {
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 30],
-                        outputRange: [0, 10 + index * 3],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
+          renderItem={({ item }) => (
+            <View style={styles.recipeCardContainer}>
               <RecipeCard
                 recipe={item}
                 source="explore"
                 categoryName={selectedCategory}
               />
-            </Animated.View>
+            </View>
           )}
         />
-      </Animated.View>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -712,6 +643,61 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  // Action Sheet Styles
+  actionSheetContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: Colors.card,
+  },
+  actionSheetIndicator: {
+    width: 60,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.textLight,
+    opacity: 0.6,
+  },
+  actionSheetContent: {
+    padding: 20,
+    paddingBottom: 32,
+  },
+  actionSheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.05)",
+  },
+  actionSheetTitle: {
+    fontFamily: "outfit-bold",
+    fontSize: 20,
+    color: Colors.text,
+  },
+  actionSheetCloseButton: {
+    padding: 4,
+  },
+  applyButton: {
+    borderRadius: 20,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    marginTop: 8,
+  },
+  applyButtonGradient: {
+    borderRadius: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  applyButtonText: {
+    fontFamily: "outfit-bold",
+    fontSize: 16,
+    color: Colors.white,
   },
   header: {
     paddingHorizontal: 20,
@@ -925,6 +911,41 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   selectedSortText: {
+    color: Colors.white,
+  },
+  categoryOptionsList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 10,
+  },
+  categoryChip: {
+    borderRadius: 20,
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  categoryChipGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  selectedCategoryChipGradient: {
+    borderColor: Colors.primary,
+  },
+  categoryText: {
+    fontFamily: "outfit",
+    fontSize: 14,
+    color: Colors.text,
+    marginLeft: 8,
+  },
+  selectedCategoryText: {
     color: Colors.white,
   },
   clearFiltersButton: {

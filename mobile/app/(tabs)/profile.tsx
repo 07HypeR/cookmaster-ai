@@ -9,17 +9,14 @@ import {
   Dimensions,
   StatusBar,
   ActivityIndicator,
-  Animated,
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/shared/Colors";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useClerk, useUser } from "@clerk/clerk-expo";
 import GlobalApi from "@/services/GlobalApi";
-
-const { width, height } = Dimensions.get("window");
 
 const Profile = () => {
   const insets = useSafeAreaInsets();
@@ -31,12 +28,6 @@ const Profile = () => {
     saved: 0,
   });
   const [loading, setLoading] = useState(true);
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const fetchUserStats = async () => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
@@ -73,71 +64,6 @@ const Profile = () => {
   useFocusEffect(
     React.useCallback(() => {
       fetchUserStats();
-    }, [user?.emailAddresses[0]?.emailAddress])
-  );
-
-  // Function to start entrance animations
-  const startEntranceAnimations = () => {
-    // Reset animation values
-    fadeAnim.setValue(0);
-    slideAnim.setValue(50);
-    scaleAnim.setValue(0.9);
-
-    // Start animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  // Start entrance animations when component mounts
-  useEffect(() => {
-    startEntranceAnimations();
-  }, []);
-
-  // Pulse animation for loading states
-  useEffect(() => {
-    if (loading) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [loading]);
-
-  // Refresh stats and restart animations when the screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      if (user?.emailAddresses[0]?.emailAddress) {
-        fetchUserStats();
-      }
-      // Restart animations when tab comes into focus
-      startEntranceAnimations();
     }, [user?.emailAddresses[0]?.emailAddress])
   );
 
@@ -234,13 +160,11 @@ const Profile = () => {
       return;
     }
 
-    // Refresh stats after navigation to ensure data is up to date
     if (
       option.path === "/(tabs)/create" ||
       option.path === "/(tabs)/cookbook" ||
       option.path === "/(tabs)/explore"
     ) {
-      // Add a small delay to allow the navigation to complete
       setTimeout(() => {
         fetchUserStats();
       }, 100);
@@ -269,15 +193,7 @@ const Profile = () => {
   };
 
   const renderSection = ({ item }: { item: any }) => (
-    <Animated.View
-      style={[
-        styles.section,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        },
-      ]}
-    >
+    <View style={styles.section}>
       <Text style={styles.sectionTitle}>{item.title}</Text>
       <View style={styles.sectionContent}>
         {item.items.map((menuItem: any, index: number) => (
@@ -286,37 +202,20 @@ const Profile = () => {
           </View>
         ))}
       </View>
-    </Animated.View>
+    </View>
   );
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top,
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-        },
-      ]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       {/* Header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
         <Text style={styles.headerSubtitle}>
           Manage your account and preferences
         </Text>
-      </Animated.View>
+      </View>
 
       {/* User Info Section */}
       <View style={styles.userSection}>
@@ -366,7 +265,7 @@ const Profile = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
       />
-    </Animated.View>
+    </View>
   );
 };
 

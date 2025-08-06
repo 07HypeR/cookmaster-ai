@@ -1,11 +1,5 @@
-import React, { useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from "react-native";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/shared/Colors";
@@ -15,47 +9,13 @@ import * as Haptics from "expo-haptics";
 const CreateRecipeBanner = () => {
   const router = useRouter();
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-
-  useEffect(() => {
-    // Animate in on mount
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
   const handleCreateRecipe = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push("/(tabs)/create");
   };
 
   return (
-    <Animated.View
-      style={[
-        styles.adBanner,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-        },
-      ]}
-    >
+    <View style={styles.adBanner}>
       <LinearGradient
         colors={["#4CAF50", "#2E7D32"] as [string, string]}
         style={styles.adGradient}
@@ -83,7 +43,7 @@ const CreateRecipeBanner = () => {
           </TouchableOpacity>
         </View>
       </LinearGradient>
-    </Animated.View>
+    </View>
   );
 };
 

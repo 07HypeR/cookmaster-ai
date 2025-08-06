@@ -8,9 +8,8 @@ import {
   RefreshControl,
   Dimensions,
   ActivityIndicator,
-  Animated,
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import GlobalApi from "@/services/GlobalApi";
 import { useRouter } from "expo-router";
@@ -18,35 +17,15 @@ import Colors from "@/shared/Colors";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const CategoryList = () => {
   const [categoryList, setCategoryList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-
   useEffect(() => {
     GetCategoryList();
-  }, []);
-
-  useEffect(() => {
-    // Animate in on mount
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
   }, []);
 
   const GetCategoryList = async () => {
@@ -74,32 +53,24 @@ const CategoryList = () => {
 
   const getCategoryGradient = (index: number) => {
     const gradients = [
-      ["#FFB74D", "#FF9800"], // Orange
-      ["#81C784", "#4CAF50"], // Green
-      ["#64B5F6", "#2196F3"], // Blue
-      ["#F06292", "#E91E63"], // Pink
-      ["#FF8A65", "#FF5722"], // Red-Orange
-      ["#BA68C8", "#9C27B0"], // Purple
-      ["#4DB6AC", "#009688"], // Teal
-      ["#FFD54F", "#FFC107"], // Yellow
-      ["#A1887F", "#795548"], // Brown
-      ["#90A4AE", "#607D8B"], // Blue-Grey
-      ["#FF7043", "#FF5722"], // Deep Orange
-      ["#7E57C2", "#673AB7"], // Deep Purple
+      ["#FFB74D", "#FF9800"],
+      ["#81C784", "#4CAF50"],
+      ["#64B5F6", "#2196F3"],
+      ["#F06292", "#E91E63"],
+      ["#FF8A65", "#FF5722"],
+      ["#BA68C8", "#9C27B0"],
+      ["#4DB6AC", "#009688"],
+      ["#FFD54F", "#FFC107"],
+      ["#A1887F", "#795548"],
+      ["#90A4AE", "#607D8B"],
+      ["#FF7043", "#FF5722"],
+      ["#7E57C2", "#673AB7"],
     ];
     return gradients[index % gradients.length];
   };
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        },
-      ]}
-    >
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
@@ -139,19 +110,7 @@ const CategoryList = () => {
               />
             }
             renderItem={({ item, index }: any) => (
-              <Animated.View
-                style={{
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 30],
-                        outputRange: [0, 15 + index * 5],
-                      }),
-                    },
-                  ],
-                }}
-              >
+              <View>
                 <TouchableOpacity
                   onPress={() => handleCategoryPress(item)}
                   style={styles.categoryCard}
@@ -185,7 +144,7 @@ const CategoryList = () => {
                     </Text>
                   </View>
                 </TouchableOpacity>
-              </Animated.View>
+              </View>
             )}
             ListEmptyComponent={
               !loading ? (
@@ -222,7 +181,7 @@ const CategoryList = () => {
           />
         )}
       </View>
-    </Animated.View>
+    </View>
   );
 };
 

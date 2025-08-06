@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import Colors from "@/shared/Colors";
 import { Image } from "expo-image";
 
@@ -17,10 +17,10 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         style={styles.logo}
         contentFit="contain"
       />
-      <ActivityIndicator
-        size="large"
-        color={Colors.primary}
-        style={styles.spinner}
+      <Image
+        source={require("../assets/images/pan.gif")}
+        style={styles.panGif}
+        contentFit="contain"
       />
       <Text style={styles.message}>{message}</Text>
     </View>
@@ -39,7 +39,9 @@ const styles = StyleSheet.create({
     height: 120,
     marginBottom: 30,
   },
-  spinner: {
+  panGif: {
+    width: 64,
+    height: 64,
     marginBottom: 20,
   },
   message: {

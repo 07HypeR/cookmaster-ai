@@ -2,41 +2,27 @@ import {
   View,
   Text,
   FlatList,
-  Platform,
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   StatusBar,
   ActivityIndicator,
-  Animated,
-  Alert,
 } from "react-native";
-import React, {
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-} from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Colors from "@/shared/Colors";
-import GlobalApi from "@/services/GlobalApi";
 import RecipeService from "@/services/RecipeService";
 import { UserContext } from "@/context/UserContext";
 import RecipeCard from "@/components/RecipeCard";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
-const { width, height } = Dimensions.get("window");
-
 const Cookbook = () => {
   const insets = useSafeAreaInsets();
-  const { user } = useUser();
   const { user: contextUser } = useContext(UserContext);
   const router = useRouter();
   const [recipeList, setRecipeList] = useState<any[]>([]);
@@ -48,11 +34,7 @@ const Cookbook = () => {
     createdCount: 0,
     savedCount: 0,
   });
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const [hasInitialData, setHasInitialData] = useState(false);
 
   const tabs = [
     {
@@ -74,7 +56,6 @@ const Cookbook = () => {
   const GetUserRecipeList = useCallback(
     async (isRefreshing = false) => {
       if (!contextUser?.email) {
-        console.log("No user email available");
         setError("Please sign in to view your recipes");
         return;
       }
@@ -86,7 +67,9 @@ const Cookbook = () => {
       }
 
       setError(null);
-      setRecipeList([]);
+      if (!isRefreshing) {
+        setRecipeList([]);
+      }
 
       try {
         const result = await RecipeService.getUserCreatedRecipes(
@@ -97,15 +80,17 @@ const Cookbook = () => {
           setError(result.error);
           setRecipeList([]);
           setStats((prev) => ({ ...prev, createdCount: 0 }));
+          setHasInitialData(false);
         } else {
           setRecipeList(result.data);
           setStats((prev) => ({ ...prev, createdCount: result.data.length }));
+          setHasInitialData(true);
         }
       } catch (error: any) {
-        console.error("Error fetching user recipes:", error);
         setError("Failed to load your recipes. Please try again.");
         setRecipeList([]);
         setStats((prev) => ({ ...prev, createdCount: 0 }));
+        setHasInitialData(false);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -117,7 +102,6 @@ const Cookbook = () => {
   const GetSavedRecipeList = useCallback(
     async (isRefreshing = false) => {
       if (!contextUser?.email) {
-        console.log("No user email available");
         setError("Please sign in to view your saved recipes");
         return;
       }
@@ -129,7 +113,9 @@ const Cookbook = () => {
       }
 
       setError(null);
-      setRecipeList([]);
+      if (!isRefreshing) {
+        setRecipeList([]);
+      }
 
       try {
         const result = await RecipeService.getUserSavedRecipes(
@@ -140,15 +126,17 @@ const Cookbook = () => {
           setError(result.error);
           setRecipeList([]);
           setStats((prev) => ({ ...prev, savedCount: 0 }));
+          setHasInitialData(false);
         } else {
           setRecipeList(result.data);
           setStats((prev) => ({ ...prev, savedCount: result.data.length }));
+          setHasInitialData(true);
         }
       } catch (error: any) {
-        console.error("Error fetching saved recipes:", error);
         setError("Failed to load your saved recipes. Please try again.");
         setRecipeList([]);
         setStats((prev) => ({ ...prev, savedCount: 0 }));
+        setHasInitialData(false);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -168,48 +156,14 @@ const Cookbook = () => {
     }
   }, [activeTab, contextUser?.email, GetUserRecipeList, GetSavedRecipeList]);
 
-  // Function to start entrance animations
-  const startEntranceAnimations = () => {
-    // Reset animation values
-    fadeAnim.setValue(0);
-    slideAnim.setValue(30);
-    scaleAnim.setValue(0.95);
-
-    // Start animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  // Start entrance animations when component mounts
-  useEffect(() => {
-    startEntranceAnimations();
-  }, []);
-
-  // Restart animations when tab comes into focus
+  // Refresh on focus
   useFocusEffect(
     React.useCallback(() => {
-      startEntranceAnimations();
-      // Refresh data when screen comes into focus
       if (contextUser?.email) {
         if (activeTab === "created") {
-          GetUserRecipeList(true);
+          GetUserRecipeList();
         } else {
-          GetSavedRecipeList(true);
+          GetSavedRecipeList();
         }
       }
     }, [contextUser?.email, activeTab, GetUserRecipeList, GetSavedRecipeList])
@@ -226,7 +180,8 @@ const Cookbook = () => {
   const handleTabPress = (tabId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setActiveTab(tabId);
-    setError(null); // Clear any previous errors
+    setError(null);
+    setHasInitialData(false);
   };
 
   const handleCreateRecipe = () => {
@@ -241,6 +196,7 @@ const Cookbook = () => {
 
   const handleRetry = () => {
     setError(null);
+    setHasInitialData(false);
     if (activeTab === "created") {
       GetUserRecipeList();
     } else {
@@ -283,15 +239,7 @@ const Cookbook = () => {
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       {/* Header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerContent}>
             <View style={styles.headerIconContainer}>
@@ -326,18 +274,10 @@ const Cookbook = () => {
             </View>
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Tab Navigation */}
-      <Animated.View
-        style={[
-          styles.tabContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.tabContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
@@ -352,18 +292,11 @@ const Cookbook = () => {
                 style={styles.tabGradient}
               />
             )}
-            {loading && activeTab === tab.id ? (
-              <ActivityIndicator
-                size="small"
-                color={activeTab === tab.id ? Colors.white : Colors.primary}
-              />
-            ) : (
-              <Ionicons
-                name={tab.icon as any}
-                size={20}
-                color={activeTab === tab.id ? Colors.white : Colors.text}
-              />
-            )}
+            <Ionicons
+              name={tab.icon as any}
+              size={20}
+              color={activeTab === tab.id ? Colors.white : Colors.text}
+            />
             <Text
               style={[
                 styles.tabText,
@@ -374,19 +307,11 @@ const Cookbook = () => {
             </Text>
           </TouchableOpacity>
         ))}
-      </Animated.View>
+      </View>
 
       {/* Error State */}
       {error && !loading && (
-        <Animated.View
-          style={[
-            styles.errorContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
+        <View style={styles.errorContainer}>
           <View style={styles.errorContent}>
             <Ionicons name="alert-circle" size={40} color={Colors.error} />
             <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
@@ -405,20 +330,12 @@ const Cookbook = () => {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </Animated.View>
+        </View>
       )}
 
       {/* Content */}
       {!error && (
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
+        <View style={styles.content}>
           <FlatList
             data={recipeList}
             numColumns={2}
@@ -434,7 +351,7 @@ const Cookbook = () => {
               />
             }
             ListEmptyComponent={
-              !loading ? (
+              !loading && hasInitialData ? (
                 <View style={styles.emptyContainer}>
                   <View style={styles.emptyIconContainer}>
                     <LinearGradient
@@ -483,33 +400,18 @@ const Cookbook = () => {
                 </View>
               )
             }
-            renderItem={({ item, index }) => (
-              <Animated.View
-                style={[
-                  styles.recipeCardContainer,
-                  {
-                    opacity: fadeAnim,
-                    transform: [
-                      {
-                        translateY: slideAnim.interpolate({
-                          inputRange: [0, 30],
-                          outputRange: [0, 10 + index * 3],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
+            renderItem={({ item }) => (
+              <View style={styles.recipeCardContainer}>
                 <RecipeCard
                   recipe={item}
                   source={
                     activeTab === "created" ? "myRecipes" : "savedRecipes"
                   }
                 />
-              </Animated.View>
+              </View>
             )}
           />
-        </Animated.View>
+        </View>
       )}
     </View>
   );
@@ -631,7 +533,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   activeTab: {
-    borderColor: "transparent",
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -661,6 +562,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 120,
+    flexGrow: 1,
   },
   recipeCardContainer: {
     flex: 1,
@@ -732,6 +634,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 60,
+    minHeight: 400,
   },
   loadingText: {
     marginTop: 16,

@@ -1,11 +1,26 @@
-import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import { useEffect, useState } from "react";
+import { Image, Modal, Text, View } from "react-native";
 import Colors from "@/shared/Colors";
 
-const LoadingDialog = ({ visible = false, text = "Loading..." }: any) => {
+export default function LoadingDialog({ loading = false, title = "" }) {
+  const [dots, setDots] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length < 3 ? prev + "." : ""));
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
   return (
-    <Modal transparent visible={visible} statusBarTranslucent={true}>
-      <View style={styles.overlay}>
+    <Modal transparent visible={loading} statusBarTranslucent>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#00000070",
+        }}
+      >
         <View
           style={{
             padding: 20,
@@ -14,27 +29,28 @@ const LoadingDialog = ({ visible = false, text = "Loading..." }: any) => {
             alignItems: "center",
           }}
         >
-          <ActivityIndicator size={"large"} color={Colors.white} />
-          <Text style={styles.text}>{text}</Text>
+          <Image
+            source={require("@/assets/images/pan.gif")}
+            style={{
+              width: 100,
+              height: 100,
+              marginBottom: 16,
+            }}
+          />
+          <Text
+            style={{
+              color: Colors.white,
+              fontSize: 18,
+              marginTop: 8,
+              textAlign: "center",
+            }}
+          >
+            {title}
+            {dots}
+            <Text style={{ opacity: 0 }}>{".".repeat(3 - dots.length)}</Text>
+          </Text>
         </View>
       </View>
     </Modal>
   );
-};
-
-export default LoadingDialog;
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#00000070",
-  },
-  text: {
-    marginTop: 10,
-    color: Colors.white,
-    fontSize: 16,
-    fontFamily: "outfit",
-  },
-});
+}

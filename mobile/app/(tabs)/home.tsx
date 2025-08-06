@@ -1,6 +1,5 @@
 import { FlatList, StatusBar, View } from "react-native";
 import React from "react";
-import { useFocusEffect } from "expo-router";
 import Colors from "@/shared/Colors";
 import IntroHeader from "@/components/IntroHeader";
 import DailyRecipeCarousel from "@/components/DailyRecipeCarousel";

@@ -5,11 +5,8 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
-  Dimensions,
-  Animated,
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react";
-import GlobalApi from "@/services/GlobalApi";
+import React, { useEffect, useState } from "react";
 import RecipeService from "@/services/RecipeService";
 import RecipeCardHome from "./RecipeCardHome";
 import Colors from "@/shared/Colors";
@@ -18,35 +15,13 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
-const { width, height } = Dimensions.get("window");
-
 const LatestRecipes = () => {
   const [recipeList, setRecipeList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-
   useEffect(() => {
     GetAllLatestRecipe();
-  }, []);
-
-  useEffect(() => {
-    // Animate in on mount
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
   }, []);
 
   // Refresh when screen comes into focus
@@ -85,15 +60,7 @@ const LatestRecipes = () => {
   };
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        },
-      ]}
-    >
+    <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.headerSection}>
         <View style={styles.headerContent}>
@@ -150,25 +117,10 @@ const LatestRecipes = () => {
               : styles.listContent
           }
           showsHorizontalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <Animated.View
-              style={[
-                styles.recipeCardWrapper,
-                {
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 30],
-                        outputRange: [0, 10 + index * 3],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
+          renderItem={({ item }) => (
+            <View style={styles.recipeCardWrapper}>
               <RecipeCardHome recipe={item} />
-            </Animated.View>
+            </View>
           )}
           ListEmptyComponent={
             !loading ? (
@@ -224,7 +176,7 @@ const LatestRecipes = () => {
           <Text style={styles.loadingText}>Loading latest recipes...</Text>
         </View>
       )}
-    </Animated.View>
+    </View>
   );
 };
 

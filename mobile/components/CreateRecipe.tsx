@@ -1,20 +1,16 @@
 import {
   View,
   Text,
-  Image,
   TextInput,
   StyleSheet,
   Alert,
   TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
 } from "react-native";
 import React, { useContext, useRef, useState, useEffect } from "react";
-import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/shared/Colors";
-import Button from "./Button";
-import GlobalApi, { AiModel } from "@/services/GlobalApi";
+import GlobalApi from "@/services/GlobalApi";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import LoadingDialog from "./LoadingDialog";
 import { UserContext } from "@/context/UserContext";
@@ -23,16 +19,16 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import RecipeService from "@/services/RecipeService";
 
-const { width, height } = Dimensions.get("window");
-
 interface CreateRecipeProps {
   selectedCategory?: string;
   selectedQuickAction?: string;
+  shortHint?: boolean;
 }
 
 const CreateRecipe = ({
   selectedCategory,
   selectedQuickAction,
+  shortHint = false,
 }: CreateRecipeProps) => {
   const { user, isVegMode, setUser } = useContext(UserContext);
   const [userInput, setUserInput] = useState<string>();
@@ -40,6 +36,7 @@ const CreateRecipe = ({
   const [loading, setLoading] = useState(false);
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [openLoading, setOpenLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingFullRecipe, setIsGeneratingFullRecipe] = useState(false);
   const router = useRouter();
@@ -80,9 +77,17 @@ const CreateRecipe = ({
   const GenerateCompleteRecipe = async (option: any) => {
     if (isGeneratingFullRecipe) return;
 
+    console.log("Starting GenerateCompleteRecipe...");
     actionSheetRef.current?.hide();
+    setLoadingMessage("Generating complete recipe...");
     setOpenLoading(true);
     setIsGeneratingFullRecipe(true);
+    console.log(
+      "Loading states set - openLoading: true, isGeneratingFullRecipe: true"
+    );
+
+    // Small delay to ensure loading dialog shows up
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     try {
       const PROMPT =
@@ -104,9 +109,13 @@ const CreateRecipe = ({
       const parsedJsonResp = JSON.parse(jsonString || "{}");
       console.log(parsedJsonResp);
 
+      setLoadingMessage("Generating recipe image...");
+      console.log("Generating recipe image...");
       const imageUrl = await GenerateRecipeAiImage(parsedJsonResp.imagePrompt);
+      setLoadingMessage("Saving recipe to database...");
+      console.log("Saving recipe to database...");
       const insertedRecordResult = await SaveDb(parsedJsonResp, imageUrl);
-      console.log(insertedRecordResult);
+      console.log("Recipe saved successfully:", insertedRecordResult);
 
       if (insertedRecordResult?.id) {
         router.push({
@@ -122,8 +131,12 @@ const CreateRecipe = ({
       console.error("Error generating complete recipe:", error);
       Alert.alert("Error", "Failed to generate recipe. Please try again.");
     } finally {
+      // Ensure loading states are always cleared
+      setLoadingMessage("Loading...");
+      console.log("Cleaning up loading states...");
       setOpenLoading(false);
       setIsGeneratingFullRecipe(false);
+      console.log("Loading states cleared");
     }
   };
 
@@ -177,6 +190,26 @@ const CreateRecipe = ({
     }
   };
 
+  // Cleanup loading states on unmount
+  useEffect(() => {
+    return () => {
+      setOpenLoading(false);
+      setIsGenerating(false);
+      setIsGeneratingFullRecipe(false);
+      setLoadingMessage("Loading...");
+    };
+  }, []);
+
+  // Debug loading state changes
+  useEffect(() => {
+    console.log(
+      "Loading state changed - openLoading:",
+      openLoading,
+      "loadingMessage:",
+      loadingMessage
+    );
+  }, [openLoading, loadingMessage]);
+
   return (
     <View style={styles.container}>
       {/* Header Section */}
@@ -211,9 +244,9 @@ const CreateRecipe = ({
           <View style={styles.inputFooter}>
             <Ionicons name="bulb" size={16} color={Colors.textLight} />
             <Text style={styles.inputHint}>
-              Be specific for better results. You can also just select a
-              category or quick action or combine, or combine all three for the
-              best results.
+              {shortHint
+                ? "Be specific for better results."
+                : "Be specific for better results. You can also just select a category or quick action or combine, or combine all three for the best results."}
             </Text>
           </View>
         </View>
@@ -245,8 +278,16 @@ const CreateRecipe = ({
       </TouchableOpacity>
 
       {/* Recipe Options Action Sheet */}
-      <ActionSheet ref={actionSheetRef}>
-        <View style={styles.actionSheetContainer}>
+      <ActionSheet
+        ref={actionSheetRef}
+        containerStyle={styles.actionSheetContainer}
+        indicatorStyle={styles.actionSheetIndicator}
+        gestureEnabled={true}
+        closeOnPressBack={true}
+        closeOnTouchBackdrop={true}
+        defaultOverlayOpacity={0.3}
+      >
+        <View style={styles.actionSheetContent}>
           <View style={styles.actionSheetHeader}>
             <View style={styles.actionSheetIconContainer}>
               <LinearGradient
@@ -309,7 +350,7 @@ const CreateRecipe = ({
       </ActionSheet>
 
       {/* Loading Dialog */}
-      <LoadingDialog visible={openLoading} />
+      <LoadingDialog loading={openLoading} title={loadingMessage} />
     </View>
   );
 };
@@ -428,6 +469,9 @@ const styles = StyleSheet.create({
   actionSheetContainer: {
     padding: 24,
   },
+  actionSheetContent: {
+    paddingBottom: 32,
+  },
   actionSheetHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -450,6 +494,14 @@ const styles = StyleSheet.create({
   },
   actionSheetTextContainer: {
     flex: 1,
+  },
+  actionSheetIndicator: {
+    width: 60,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.textLight,
+    opacity: 0.6,
+    marginBottom: 20,
   },
   actionSheetTitle: {
     fontSize: 22,

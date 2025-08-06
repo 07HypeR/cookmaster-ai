@@ -7,11 +7,9 @@ import {
   TouchableOpacity,
   View,
   StatusBar,
-  Dimensions,
-  Alert,
-  Animated,
 } from "react-native";
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -21,21 +19,25 @@ import RecipeCard from "@/components/RecipeCard";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
-const { width, height } = Dimensions.get("window");
+// Sort options
+const sortOptions = [
+  { id: "newest", name: "Newest", icon: "calendar" },
+  { id: "name", name: "Name (A to Z)", icon: "text" },
+  { id: "time", name: "Lowest Cooking Time", icon: "time" },
+  { id: "difficulty", name: "Difficulty", icon: "trending-up" },
+];
 
 const RecipeByCategory = () => {
   const { categoryName } = useLocalSearchParams();
   const [recipeList, setRecipeList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sortBy, setSortBy] = useState(""); // No sorting by default
+  const [sortBy, setSortBy] = useState(""); // No default sorting
+  const [tempSortBy, setTempSortBy] = useState("");
+
+  // Reference to the action sheet
+  const filterActionSheetRef = useRef<ActionSheetRef>(null);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const handleBackPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -44,24 +46,20 @@ const RecipeByCategory = () => {
 
   const handleFilterPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert("Sort Recipes", "Choose how to sort the recipes:", [
-      { text: "Cancel", style: "cancel", onPress: () => setSortBy("") },
-      {
-        text: "By Name",
-        onPress: () => setSortBy("name"),
-        style: sortBy === "name" ? "default" : "default",
-      },
-      {
-        text: "By Time",
-        onPress: () => setSortBy("time"),
-        style: sortBy === "time" ? "default" : "default",
-      },
-      {
-        text: "By Difficulty",
-        onPress: () => setSortBy("difficulty"),
-        style: sortBy === "difficulty" ? "default" : "default",
-      },
-    ]);
+    // Initialize temporary state with current value
+    setTempSortBy(sortBy);
+    // Show the action sheet
+    filterActionSheetRef.current?.show();
+  };
+
+  const handleTempSortPress = (sort: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setTempSortBy(sort);
+  };
+
+  const clearFilters = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setTempSortBy("");
   };
 
   const GetRecipeListByCategory = useCallback(async () => {
@@ -76,48 +74,10 @@ const RecipeByCategory = () => {
     GetRecipeListByCategory();
   }, [GetRecipeListByCategory]);
 
-  useEffect(() => {
-    // Animate in on mount
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Start pulse animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
   const getCategoryIcon = (category: string) => {
     if (!category) return { name: "restaurant", type: "Ionicons" };
 
     const categoryIcons: { [key: string]: { name: string; type: string } } = {
-      // Basic categories
       breakfast: { name: "sunny", type: "Ionicons" },
       lunch: { name: "restaurant", type: "Ionicons" },
       dinner: { name: "moon", type: "Ionicons" },
@@ -157,21 +117,64 @@ const RecipeByCategory = () => {
         return "time";
       case "difficulty":
         return "trending-up";
+      case "newest":
+        return "calendar";
       default:
-        return "filter"; // Default filter icon when no sorting is applied
+        return "filter"; // Filter for no selection
     }
   };
 
   const sortedRecipes = [...recipeList].sort((a, b) => {
     switch (sortBy) {
       case "name":
-        return a.name?.localeCompare(b.name) || 0;
+        const nameA = a?.attributes?.recipe_name || a?.recipe_name || "";
+        const nameB = b?.attributes?.recipe_name || b?.recipe_name || "";
+        return nameA.localeCompare(nameB);
       case "time":
-        return (a.cookingTime || 0) - (b.cookingTime || 0);
+        const timeA =
+          a?.attributes?.cook_time ??
+          a?.cook_time ??
+          a?.attributes?.cooking_time ??
+          a?.cooking_time ??
+          0;
+        const timeB =
+          b?.attributes?.cook_time ??
+          b?.cook_time ??
+          b?.attributes?.cooking_time ??
+          b?.cooking_time ??
+          0;
+        return timeA - timeB;
       case "difficulty":
-        return (a.difficulty || 0) - (b.difficulty || 0);
+        // Difficulty = more steps => harder
+        const stepsAData = a?.attributes?.steps ?? a?.steps ?? [];
+        const stepsBData = b?.attributes?.steps ?? b?.steps ?? [];
+        const stepsALen = Array.isArray(stepsAData)
+          ? stepsAData.length
+          : (() => {
+              try {
+                return JSON.parse(stepsAData || "[]").length;
+              } catch {
+                return 0;
+              }
+            })();
+        const stepsBLen = Array.isArray(stepsBData)
+          ? stepsBData.length
+          : (() => {
+              try {
+                return JSON.parse(stepsBData || "[]").length;
+              } catch {
+                return 0;
+              }
+            })();
+        return stepsBLen - stepsALen; // more steps first
+      case "newest":
+        const dateA = a?.attributes?.created_at || a?.created_at || 0;
+        const dateB = b?.attributes?.created_at || b?.created_at || 0;
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+
       default:
-        return 0; // No sorting applied
+        // No sorting, return as is
+        return 0;
     }
   });
 
@@ -180,15 +183,7 @@ const RecipeByCategory = () => {
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       {/* Header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={handleBackPress}
@@ -204,14 +199,7 @@ const RecipeByCategory = () => {
 
         <View style={styles.headerContent}>
           <View style={styles.categoryInfo}>
-            <Animated.View
-              style={[
-                styles.categoryIconContainer,
-                {
-                  transform: [{ scale: pulseAnim }],
-                },
-              ]}
-            >
+            <View style={styles.categoryIconContainer}>
               <LinearGradient
                 colors={getCategoryGradient(categoryName as string)}
                 style={styles.categoryIconGradient}
@@ -231,7 +219,7 @@ const RecipeByCategory = () => {
                   />
                 )}
               </LinearGradient>
-            </Animated.View>
+            </View>
             <View style={styles.categoryTextContainer}>
               <Text style={styles.categoryTitle}>{categoryName}</Text>
               <Text style={styles.categorySubtitle}>
@@ -255,19 +243,11 @@ const RecipeByCategory = () => {
             </LinearGradient>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+      </View>
 
-      {/* Sort Indicator */}
-      {sortBy && (
-        <Animated.View
-          style={[
-            styles.sortIndicator,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
+      {/* Sort Indicator - Only visible when sorting is applied */}
+      {sortBy !== "" && (
+        <View style={styles.sortIndicator}>
           <View style={styles.sortIconContainer}>
             <LinearGradient
               colors={["#4CAF50", "#2E7D32"] as [string, string]}
@@ -279,10 +259,14 @@ const RecipeByCategory = () => {
           <Text style={styles.sortText}>
             Sorted by{" "}
             {sortBy === "time"
-              ? "cooking time"
+              ? "lowest cooking time"
               : sortBy === "difficulty"
               ? "difficulty"
-              : "name"}
+              : sortBy === "name"
+              ? "name (A to Z)"
+              : sortBy === "newest"
+              ? "newest"
+              : ""}
           </Text>
           <TouchableOpacity
             onPress={() => setSortBy("")}
@@ -291,19 +275,11 @@ const RecipeByCategory = () => {
           >
             <Ionicons name="close-circle" size={20} color={Colors.gray} />
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       )}
 
       {/* Recipe Grid */}
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
+      <View style={styles.content}>
         <FlatList
           data={sortedRecipes}
           numColumns={2}
@@ -318,24 +294,7 @@ const RecipeByCategory = () => {
           ListEmptyComponent={
             !loading ? (
               <View style={styles.emptyContainer}>
-                <Animated.View
-                  style={[
-                    styles.emptyIconContainer,
-                    {
-                      transform: [
-                        {
-                          translateY: slideAnim.interpolate({
-                            inputRange: [0, 30],
-                            outputRange: [0, -10],
-                          }),
-                        },
-                        {
-                          scale: pulseAnim,
-                        },
-                      ],
-                    },
-                  ]}
-                >
+                <View style={styles.emptyIconContainer}>
                   <LinearGradient
                     colors={getCategoryGradient(categoryName as string)}
                     style={styles.emptyIconGradient}
@@ -359,7 +318,7 @@ const RecipeByCategory = () => {
                       />
                     )}
                   </LinearGradient>
-                </Animated.View>
+                </View>
                 <Text style={styles.emptyTitle}>No Recipes Found</Text>
                 <Text style={styles.emptySubtitle}>
                   No {(categoryName as string).toLowerCase()} recipes available
@@ -385,32 +344,102 @@ const RecipeByCategory = () => {
           }
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
-          renderItem={({ item, index }) => (
-            <Animated.View
-              style={[
-                styles.recipeCardContainer,
-                {
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 30],
-                        outputRange: [0, 10 + index * 3],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
+          renderItem={({ item }) => (
+            <View style={styles.recipeCardContainer}>
               <RecipeCard
                 recipe={item}
                 source="category"
                 categoryName={categoryName}
               />
-            </Animated.View>
+            </View>
           )}
         />
-      </Animated.View>
+      </View>
+
+      {/* Action Sheet for Filters */}
+      <ActionSheet
+        ref={filterActionSheetRef}
+        containerStyle={styles.actionSheetContainer}
+        indicatorStyle={styles.actionSheetIndicator}
+        gestureEnabled={true}
+        closeOnPressBack={true}
+        closeOnTouchBackdrop={true}
+        defaultOverlayOpacity={0.3}
+      >
+        <View style={styles.actionSheetContent}>
+          <View style={styles.actionSheetHeader}>
+            <Text style={styles.actionSheetTitle}>Sort Recipes</Text>
+            <TouchableOpacity
+              onPress={() => filterActionSheetRef.current?.hide()}
+              style={styles.actionSheetCloseButton}
+            >
+              <Ionicons name="close" size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Sort Options */}
+          <View style={styles.filterSection}>
+            <Text style={styles.filterTitle}>Sort By</Text>
+            <View style={styles.sortOptionsList}>
+              {sortOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={styles.sortChip}
+                  onPress={() => handleTempSortPress(option.id)}
+                  activeOpacity={0.7}
+                >
+                  <LinearGradient
+                    colors={
+                      tempSortBy === option.id
+                        ? (["#4CAF50", "#2E7D32"] as [string, string])
+                        : [Colors.card, Colors.card]
+                    }
+                    style={[
+                      styles.sortChipGradient,
+                      tempSortBy === option.id &&
+                        styles.selectedSortChipGradient,
+                    ]}
+                  >
+                    <Ionicons
+                      name={option.icon as any}
+                      size={16}
+                      color={
+                        tempSortBy === option.id ? Colors.white : Colors.text
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.actionSheetSortText,
+                        tempSortBy === option.id && styles.selectedSortText,
+                      ]}
+                    >
+                      {option.name}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Apply Button */}
+          <TouchableOpacity
+            style={styles.applyButton}
+            onPress={() => {
+              // Apply the temporary selections
+              setSortBy(tempSortBy);
+              filterActionSheetRef.current?.hide();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }}
+          >
+            <LinearGradient
+              colors={["#4CAF50", "#2E7D32"] as [string, string]}
+              style={styles.applyButtonGradient}
+            >
+              <Text style={styles.applyButtonText}>Apply Sorting</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </ActionSheet>
     </View>
   );
 };
@@ -421,6 +450,126 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  // Action Sheet Styles
+  actionSheetContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: Colors.card,
+  },
+  actionSheetIndicator: {
+    width: 60,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.textLight,
+    opacity: 0.6,
+  },
+  actionSheetContent: {
+    padding: 20,
+    paddingBottom: 32,
+  },
+  actionSheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.05)",
+  },
+  actionSheetTitle: {
+    fontFamily: "outfit-bold",
+    fontSize: 20,
+    color: Colors.text,
+  },
+  actionSheetCloseButton: {
+    padding: 4,
+  },
+  filterSection: {
+    marginBottom: 20,
+  },
+  filterTitle: {
+    fontFamily: "outfit-bold",
+    fontSize: 18,
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  sortOptionsList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  sortChip: {
+    borderRadius: 20,
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sortChipGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  selectedSortChipGradient: {
+    borderColor: Colors.primary,
+  },
+  actionSheetSortText: {
+    fontFamily: "outfit",
+    fontSize: 14,
+    color: Colors.text,
+    marginLeft: 8,
+  },
+  selectedSortText: {
+    color: Colors.white,
+  },
+  clearFiltersButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.card,
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 15,
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  clearFiltersText: {
+    fontFamily: "outfit-bold",
+    fontSize: 16,
+    color: Colors.primary,
+    marginLeft: 8,
+  },
+  applyButton: {
+    borderRadius: 20,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  applyButtonGradient: {
+    borderRadius: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  applyButtonText: {
+    fontFamily: "outfit-bold",
+    fontSize: 16,
+    color: Colors.white,
   },
   header: {
     flexDirection: "row",

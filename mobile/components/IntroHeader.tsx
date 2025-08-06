@@ -1,15 +1,13 @@
 import {
   Image,
-  Switch,
   Text,
   View,
   StyleSheet,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Animated,
 } from "react-native";
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/shared/Colors";
@@ -27,11 +25,6 @@ const IntroHeader = React.forwardRef((props, ref) => {
     saved: 0,
   });
   const [loading, setLoading] = useState(true);
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   const handleVegToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -83,27 +76,6 @@ const IntroHeader = React.forwardRef((props, ref) => {
     fetchUserStats();
   }, [user?.emailAddresses[0]?.emailAddress]);
 
-  useEffect(() => {
-    // Animate in on mount
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
   // Refresh stats when the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
@@ -129,15 +101,7 @@ const IntroHeader = React.forwardRef((props, ref) => {
   };
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-        },
-      ]}
-    >
+    <View style={styles.container}>
       {/* User Info Section */}
       <View style={styles.userSection}>
         <View style={styles.userInfo}>
@@ -229,7 +193,7 @@ const IntroHeader = React.forwardRef((props, ref) => {
           </View>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 });
 

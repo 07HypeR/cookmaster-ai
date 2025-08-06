@@ -117,6 +117,41 @@ class RecipeService {
   }
 
   /**
+   * Fetch random recipes for daily carousel
+   */
+  async getRandomRecipes(count: number = 3): Promise<RecipeResponse> {
+    try {
+      // Get all recipes first
+      const result = await GlobalApi.GetAllRecipeList();
+      const allRecipes = result.data?.data || [];
+
+      if (allRecipes.length === 0) {
+        return {
+          data: [],
+        };
+      }
+
+      // Shuffle and take the first 'count' recipes
+      const shuffled = [...allRecipes].sort(() => 0.5 - Math.random());
+      const randomRecipes = shuffled.slice(0, count);
+
+      console.log("Random recipes fetched:", randomRecipes);
+
+      return {
+        data: randomRecipes,
+      };
+    } catch (error: any) {
+      console.error("Error fetching random recipes:", error);
+      return {
+        data: [],
+        error:
+          error.response?.data?.error?.message ||
+          "Failed to fetch random recipes",
+      };
+    }
+  }
+
+  /**
    * Fetch recipes by category
    */
   async getRecipesByCategory(category: string): Promise<RecipeResponse> {
