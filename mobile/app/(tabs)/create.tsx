@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   },
   selectedCategory: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary + "08",
+    backgroundColor: Colors.secondary,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   },
   selectedQuickAction: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary + "08",
+    backgroundColor: Colors.secondary,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
