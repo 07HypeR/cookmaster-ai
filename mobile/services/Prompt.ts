@@ -1,7 +1,7 @@
 export default {
   GENERATE_RECIPE_OPTION_PROMPT: `Based on the user's request above, create 3 different recipe variants. Each recipe should include:
 
-1. A creative recipe name with an appropriate emoji
+1. A creative recipe name with an appropriate emoji at the end of the recipe name
 2. A 2-line description explaining the dish
 3. A list of main ingredients (without quantities)
 
@@ -9,17 +9,17 @@ Please respond in the following JSON format:
 \`\`\`json
 [
   {
-    "recipeName": "Recipe Name with Emoji",
+    "recipeName": "Recipe Name with Emoji at the end of the Recipe name",
     "description": "Brief description of the recipe in 2 lines",
     "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
   },
   {
-    "recipeName": "Recipe Name with Emoji", 
+    "recipeName": "Recipe Name with Emoji at the end of the Recipe name", 
     "description": "Brief description of the recipe in 2 lines",
     "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
   },
   {
-    "recipeName": "Recipe Name with Emoji",
+    "recipeName": "Recipe Name with Emoji at the end of the Recipe name",
     "description": "Brief description of the recipe in 2 lines", 
     "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
   }
