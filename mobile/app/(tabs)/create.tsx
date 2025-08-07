@@ -1,9 +1,6 @@
 import {
   View,
   Text,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
@@ -16,6 +13,7 @@ import CreateRecipe from "@/components/CreateRecipe";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const { width } = Dimensions.get("window");
 
@@ -170,14 +168,10 @@ const Create = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
-      {/* Header */}
+      {/* Fixed Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerIconContainer}>
@@ -197,7 +191,7 @@ const Create = () => {
         </View>
       </View>
 
-      {/* Tab Navigation */}
+      {/* Fixed Tab Navigation */}
       <View style={styles.tabContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity
@@ -229,11 +223,14 @@ const Create = () => {
         ))}
       </View>
 
-      {/* Content */}
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
+      {/* Scrollable Content */}
+      <KeyboardAwareScrollView
+        style={styles.scrollableContent}
         contentContainerStyle={styles.contentContainer}
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={30}
+        showsVerticalScrollIndicator={false}
       >
         {activeTab === "ai" ? (
           <View style={styles.aiContainer}>
@@ -371,8 +368,8 @@ const Create = () => {
             </TouchableOpacity>
           </View>
         )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </View>
   );
 };
 
@@ -471,7 +468,7 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: Colors.white,
   },
-  content: {
+  scrollableContent: {
     flex: 1,
   },
   contentContainer: {

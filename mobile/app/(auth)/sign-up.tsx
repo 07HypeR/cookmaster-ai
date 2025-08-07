@@ -6,9 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Alert,
   Dimensions,
 } from "react-native";
@@ -17,6 +14,7 @@ import Colors from "@/shared/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import VerifyEmail from "./verify-email";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const { height } = Dimensions.get("window");
 
@@ -68,103 +66,100 @@ const SignUp = () => {
     );
 
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Image Container */}
-          <View style={styles.imageContainer}>
-            <Image
-              source={require("../../assets/images/SignUp.png")}
-              style={styles.image}
-              contentFit="contain"
+    <KeyboardAwareScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      extraScrollHeight={30}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.container}>
+        {/* Image Container */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../../assets/images/SignUp.png")}
+            style={styles.image}
+            contentFit="contain"
+          />
+        </View>
+
+        <Text style={styles.title}>Create Account ✨</Text>
+
+        <View style={styles.formContainer}>
+          {/* Username Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter username"
+              placeholderTextColor={Colors.textLight}
+              value={username}
+              onChangeText={setUsername}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
           </View>
 
-          <Text style={styles.title}>Create Account ✨</Text>
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter email"
+              placeholderTextColor={Colors.textLight}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-          <View style={styles.formContainer}>
-            {/* Username Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter username"
-                placeholderTextColor={Colors.textLight}
-                value={username}
-                onChangeText={setUsername}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter email"
-                placeholderTextColor={Colors.textLight}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter password"
-                placeholderTextColor={Colors.textLight}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color={Colors.textLight}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Sign Up Button */}
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter password"
+              placeholderTextColor={Colors.textLight}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+            />
             <TouchableOpacity
-              style={[styles.authButton, loading && styles.buttonDisabled]}
-              onPress={handleSignUp}
-              disabled={loading}
-              activeOpacity={0.8}
+              style={styles.eyeButton}
+              onPress={() => setShowPassword(!showPassword)}
             >
-              <Text style={styles.buttonText}>
-                {loading ? "Creating Account..." : "Sign Up"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Sign In Link */}
-            <TouchableOpacity
-              style={styles.linkContainer}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.linkText}>
-                Already have an account?{" "}
-                <Text style={styles.link}>Sign In</Text>
-              </Text>
+              <Ionicons
+                name={showPassword ? "eye-outline" : "eye-off-outline"}
+                size={20}
+                color={Colors.textLight}
+              />
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+
+          {/* Sign Up Button */}
+          <TouchableOpacity
+            style={[styles.authButton, loading && styles.buttonDisabled]}
+            onPress={handleSignUp}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "Creating Account..." : "Sign Up"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sign In Link */}
+          <TouchableOpacity
+            style={styles.linkContainer}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.linkText}>
+              Already have an account? <Text style={styles.link}>Sign In</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -174,13 +169,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
+    padding: 20,
+    justifyContent: "center",
     paddingTop: 40,
   },
   imageContainer: {

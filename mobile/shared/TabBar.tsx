@@ -1,4 +1,4 @@
-import { View, StyleSheet, LayoutChangeEvent } from "react-native";
+import { View, StyleSheet, LayoutChangeEvent, Platform } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import Colors from "./Colors";
 import TabBarButton from "./TabBarButton";
@@ -7,12 +7,20 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Keyboard, KeyboardEvent } from "react-native";
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const [dimensions, setDimensions] = useState({ height: 20, width: 100 });
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const insets = useSafeAreaInsets();
+
   const topPositionX = useSharedValue(0);
+  const tabBarTranslateY = useSharedValue(0);
+  const tabBarOpacity = useSharedValue(1);
 
   const buttonWidth = dimensions.width / state.routes.length;
 
@@ -22,6 +30,33 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       width: e.nativeEvent.layout.width,
     });
   };
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (event: KeyboardEvent) => {
+        setKeyboardVisible(true);
+        // Hide the tab bar when keyboard appears
+        tabBarTranslateY.value = withTiming(100, { duration: 250 });
+        tabBarOpacity.value = withTiming(0, { duration: 200 });
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+        // Show the tab bar when keyboard hides
+        tabBarTranslateY.value = withTiming(0, { duration: 250 });
+        tabBarOpacity.value = withTiming(1, { duration: 300 });
+      }
+    );
+
+    return () => {
+      keyboardDidHideListener?.remove();
+      keyboardDidShowListener?.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (dimensions.width > 0) {
@@ -41,8 +76,18 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     };
   });
 
+  const tabBarAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: tabBarTranslateY.value }],
+      opacity: tabBarOpacity.value,
+    };
+  });
+
   return (
-    <View onLayout={onTabBarLayout} style={styles.tabBar}>
+    <Animated.View
+      onLayout={onTabBarLayout}
+      style={[styles.tabBar, { bottom: 20 }, tabBarAnimatedStyle]}
+    >
       <Animated.View
         style={[
           animatedStyle,
@@ -101,7 +146,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           </View>
         );
       })}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -110,7 +155,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     right: 20,
-    bottom: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

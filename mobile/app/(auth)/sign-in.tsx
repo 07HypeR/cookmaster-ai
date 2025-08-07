@@ -10,9 +10,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Alert,
   Dimensions,
 } from "react-native";
@@ -20,6 +17,7 @@ import Colors from "@/shared/Colors";
 import { useSignIn } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const { height } = Dimensions.get("window");
 
@@ -81,89 +79,87 @@ const SignIn = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.imageContainer}>
-            <Image
-              source={require("../../assets/images/SignIn.png")}
-              style={styles.image}
-              contentFit="contain"
+    <KeyboardAwareScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      extraScrollHeight={30}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.container}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../../assets/images/SignIn.png")}
+            style={styles.image}
+            contentFit="contain"
+          />
+        </View>
+
+        <Text style={styles.title}>Welcome Back 👋</Text>
+
+        {/* FORM CONTAINER */}
+        <View style={styles.formContainer}>
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter email"
+              placeholderTextColor={Colors.textLight}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
           </View>
 
-          <Text style={styles.title}>Welcome Back 👋</Text>
-
-          {/* FORM CONTAINER */}
-          <View style={styles.formContainer}>
-            {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter email"
-                placeholderTextColor={Colors.textLight}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* PASSWORD INPUT */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter password"
-                placeholderTextColor={Colors.textLight}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color={Colors.textLight}
-                />
-              </TouchableOpacity>
-            </View>
-
+          {/* PASSWORD INPUT */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter password"
+              placeholderTextColor={Colors.textLight}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+            />
             <TouchableOpacity
-              style={[styles.authButton, loading && styles.buttonDisabled]}
-              onPress={handleSignIn}
-              disabled={loading}
-              activeOpacity={0.8}
+              style={styles.eyeButton}
+              onPress={() => setShowPassword(!showPassword)}
             >
-              <Text style={styles.buttonText}>
-                {loading ? "Signing In..." : "Sign In"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Sign Up Link */}
-            <TouchableOpacity
-              style={styles.linkContainer}
-              onPress={() => router.push("/sign-up")}
-            >
-              <Text style={styles.linkText}>
-                Don&apos;t have an account?{" "}
-                <Text style={styles.link}>Sign up</Text>
-              </Text>
+              <Ionicons
+                name={showPassword ? "eye-outline" : "eye-off-outline"}
+                size={20}
+                color={Colors.textLight}
+              />
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+
+          <TouchableOpacity
+            style={[styles.authButton, loading && styles.buttonDisabled]}
+            onPress={handleSignIn}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "Signing In..." : "Sign In"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sign Up Link */}
+          <TouchableOpacity
+            style={styles.linkContainer}
+            onPress={() => router.push("/sign-up")}
+          >
+            <Text style={styles.linkText}>
+              Don&apos;t have an account?{" "}
+              <Text style={styles.link}>Sign up</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -173,13 +169,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
+    padding: 20,
+    justifyContent: "center",
     paddingTop: 40,
   },
   imageContainer: {

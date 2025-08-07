@@ -3,11 +3,8 @@ import {
   Text,
   Alert,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
   StyleSheet,
   Dimensions,
-  Platform,
   TextInput,
 } from "react-native";
 import React, { useState, useContext } from "react";
@@ -18,6 +15,7 @@ import { UserContext } from "@/context/UserContext";
 import UserService from "@/services/UserService";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 interface VerifyEmailProps {
   email: string;
@@ -104,73 +102,71 @@ const VerifyEmail = ({ email, username, onBack }: VerifyEmailProps) => {
   };
 
   return (
-    <View style={verificationStyles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={verificationStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-      >
-        <ScrollView
-          contentContainerStyle={verificationStyles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Image Container */}
-          <View style={verificationStyles.imageContainer}>
-            <Image
-              source={require("../../assets/images/verification.png")}
-              style={verificationStyles.image}
-              contentFit="contain"
+    <KeyboardAwareScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      extraScrollHeight={30}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={verificationStyles.container}>
+        {/* Image Container */}
+        <View style={verificationStyles.imageContainer}>
+          <Image
+            source={require("../../assets/images/verification.png")}
+            style={verificationStyles.image}
+            contentFit="contain"
+          />
+        </View>
+
+        {/* Title */}
+        <Text style={verificationStyles.title}>Verify Your Email</Text>
+        <Text style={verificationStyles.subtitle}>
+          We&apos;ve sent a verification code to {email}
+        </Text>
+
+        <View style={verificationStyles.formContainer}>
+          {/* Verification Code Input */}
+          <View style={verificationStyles.inputContainer}>
+            <TextInput
+              style={verificationStyles.textInput}
+              placeholder="Enter verification code"
+              placeholderTextColor={Colors.textLight}
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              autoCapitalize="none"
             />
           </View>
 
-          {/* Title */}
-          <Text style={verificationStyles.title}>Verify Your Email</Text>
-          <Text style={verificationStyles.subtitle}>
-            We&apos;ve sent a verification code to {email}
-          </Text>
+          {/* Verify Button */}
+          <TouchableOpacity
+            style={[
+              verificationStyles.authButton,
+              loading && verificationStyles.buttonDisabled,
+            ]}
+            onPress={handleVerification}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Text style={verificationStyles.buttonText}>
+              {loading ? "Verifying..." : "Verify Email"}
+            </Text>
+          </TouchableOpacity>
 
-          <View style={verificationStyles.formContainer}>
-            {/* Verification Code Input */}
-            <View style={verificationStyles.inputContainer}>
-              <TextInput
-                style={verificationStyles.textInput}
-                placeholder="Enter verification code"
-                placeholderTextColor={Colors.textLight}
-                value={code}
-                onChangeText={setCode}
-                keyboardType="number-pad"
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* Verify Button */}
-            <TouchableOpacity
-              style={[
-                verificationStyles.authButton,
-                loading && verificationStyles.buttonDisabled,
-              ]}
-              onPress={handleVerification}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text style={verificationStyles.buttonText}>
-                {loading ? "Verifying..." : "Verify Email"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Back to Sign Up */}
-            <TouchableOpacity
-              style={verificationStyles.linkContainer}
-              onPress={onBack}
-            >
-              <Text style={verificationStyles.linkText}>
-                <Text style={verificationStyles.link}>Back to Sign Up</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+          {/* Back to Sign Up */}
+          <TouchableOpacity
+            style={verificationStyles.linkContainer}
+            onPress={onBack}
+          >
+            <Text style={verificationStyles.linkText}>
+              <Text style={verificationStyles.link}>Back to Sign Up</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -180,15 +176,11 @@ const verificationStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
+    padding: 20,
+    justifyContent: "center",
     paddingTop: 40,
   },
+
   imageContainer: {
     height: height * 0.3,
     marginBottom: 30,
