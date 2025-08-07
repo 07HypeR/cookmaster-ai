@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   View,
   StyleSheet,
-  Dimensions,
   StatusBar,
   ActivityIndicator,
 } from "react-native";

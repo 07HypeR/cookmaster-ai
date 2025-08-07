@@ -7,7 +7,6 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import Colors from "./Colors";
 
 const icon = {
   home: () => (

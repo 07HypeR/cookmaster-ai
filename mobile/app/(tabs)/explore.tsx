@@ -8,8 +8,6 @@ import {
   StatusBar,
   ActivityIndicator,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -323,11 +321,7 @@ const Explore = () => {
   const emptyState = getEmptyStateContent();
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       {/* Header */}
@@ -633,7 +627,7 @@ const Explore = () => {
           )}
         />
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 

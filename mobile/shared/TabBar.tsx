@@ -1,4 +1,4 @@
-import { View, Platform, StyleSheet, LayoutChangeEvent } from "react-native";
+import { View, StyleSheet, LayoutChangeEvent } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import Colors from "./Colors";
 import TabBarButton from "./TabBarButton";
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     right: 20,
-    bottom: 40,
+    bottom: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

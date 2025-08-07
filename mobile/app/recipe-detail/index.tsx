@@ -3,8 +3,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   StatusBar,
   StyleSheet,
@@ -15,11 +13,11 @@ import RecipeIntro from "@/components/RecipeIntro";
 import Colors from "@/shared/Colors";
 import Ingredient from "@/components/Ingredient";
 import RecipeSteps from "@/components/RecipeSteps";
-import CreateRecipe from "@/components/CreateRecipe";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import RecipeService from "@/services/RecipeService";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import CreateRecipeBanner from "@/components/CreateRecipeBanner";
 
 interface Recipe {
   id: number;
@@ -142,11 +140,7 @@ const RecipeDetail = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
+    <View style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       <FlatList
         data={[]}
@@ -215,12 +209,12 @@ const RecipeDetail = () => {
                   </Text>
                 </View>
               </View>
-              <CreateRecipe shortHint={true} />
+              <CreateRecipeBanner />
             </View>
           </View>
         }
       />
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -235,7 +229,7 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     backgroundColor: Colors.background,
-    paddingBottom: 120,
+    paddingBottom: 30,
   },
   content: {
     padding: 20,

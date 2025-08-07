@@ -34,7 +34,7 @@ const Index = () => {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ paddingVertical: 10 }}>
